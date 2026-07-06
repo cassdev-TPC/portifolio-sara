@@ -259,6 +259,17 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         </div>
       </section>
 
+      {/* Cover */}
+      <section className="border-t border-border bg-card px-5 md:px-8 py-8 md:py-12">
+        <div className="max-w-6xl mx-auto overflow-hidden bg-muted">
+          <img
+            src="/assets/home-cover.png"
+            alt="Equipamentos de fotografia e edição sobre mesa"
+            className="w-full h-[320px] md:h-[520px] object-cover"
+          />
+        </div>
+      </section>
+
       {/* About */}
       <section className="bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20">
         <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start">
