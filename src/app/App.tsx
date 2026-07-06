@@ -698,6 +698,14 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
       <div className="border-t border-border px-5 md:px-8 py-4 flex items-center justify-between">
         <p className="text-xs text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>
           © 2024 Sara Marques. Todos os direitos reservados.
+          <button
+            onClick={() => onNav("login")}
+            className="ml-2 text-muted-foreground/30 hover:text-accent transition-colors align-baseline"
+            aria-label="Acesso administrativo"
+            title="Acesso"
+          >
+            ✦
+          </button>
         </p>
         <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
           Birigui · SP
