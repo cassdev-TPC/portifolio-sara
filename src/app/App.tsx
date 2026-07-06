@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { FormEvent } from "react";
-import { X, Menu, Sun, Moon, Play, ChevronLeft, ChevronRight, Check, ArrowUpRight, Camera, Film, Image, Package } from "lucide-react";
+import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, Check, ArrowUpRight, Camera, Film, Image, Package } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Page = "home" | "photos" | "videos" | "pricing";
@@ -249,8 +249,6 @@ function Navbar({
   dark: boolean;
   onToggleDark: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-
   const links: { label: string; page: Page }[] = [
     { label: "Início", page: "home" },
     { label: "Fotos", page: "photos" },
@@ -260,7 +258,7 @@ function Navbar({
 
   return (
     <nav className="fixed top-0 inset-x-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 min-h-16 py-3 md:py-0 flex items-center justify-between flex-wrap gap-y-3">
         <button
           onClick={() => onNav("home")}
           className="font-serif text-xl tracking-tight leading-none"
@@ -273,7 +271,7 @@ function Navbar({
         </button>
 
         {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-8">
+        <ul className="order-3 w-full flex items-center justify-center gap-5 overflow-x-auto border-t border-border pt-3 md:order-none md:w-auto md:border-0 md:pt-0 md:gap-8">
           {links.map((l) => (
             <li key={l.page}>
               <button
@@ -309,41 +307,8 @@ function Navbar({
           >
             Contratar
           </button>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setOpen(!open)}
-            aria-label="Menu"
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden bg-background border-t border-border px-5 pb-5 pt-3 flex flex-col gap-4">
-          {links.map((l) => (
-            <button
-              key={l.page}
-              onClick={() => { onNav(l.page); setOpen(false); }}
-              className={cn(
-                "text-left text-base py-1 border-b border-border transition-colors",
-                current === l.page ? "text-accent" : "text-muted-foreground"
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-          <button
-            className="mt-2 px-4 py-2.5 text-xs tracking-widest uppercase bg-primary text-primary-foreground"
-            onClick={() => { onNav("pricing"); setOpen(false); }}
-          >
-            Contratar agora
-          </button>
-        </div>
-      )}
     </nav>
   );
 }
@@ -351,11 +316,11 @@ function Navbar({
 // ── HOME PAGE ──────────────────────────────────────────────────────────────
 function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
-    <main className="pt-16">
+    <main className="pt-28 md:pt-16">
       {/* Hero */}
-      <section className="min-h-[calc(100vh-4rem)] grid md:grid-cols-2">
+      <section className="min-h-[calc(100vh-4rem)] flex items-center bg-background">
         {/* Left — text */}
-        <div className="flex flex-col justify-center px-8 md:px-16 lg:px-20 py-16 md:py-24">
+        <div className="w-full max-w-6xl mx-auto flex flex-col justify-center px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <p
             className="text-xs tracking-[0.3em] uppercase text-accent mb-8"
             style={{ fontFamily: "DM Mono, monospace" }}
@@ -385,21 +350,6 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             >
               Contratar
             </button>
-          </div>
-        </div>
-
-        {/* Right — image */}
-        <div className="relative hidden md:block bg-muted overflow-hidden">
-          <img
-            src="/assets/sara-marques.png"
-            alt="Sara Marques"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          <div className="absolute bottom-8 left-8 right-8">
-            <p className="text-white/80 text-xs tracking-[0.2em] uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-              Sara Marques · Birigui, SP
-            </p>
           </div>
         </div>
       </section>
@@ -546,7 +496,7 @@ function PhotosPage() {
   };
 
   return (
-    <main className="pt-16 min-h-screen">
+    <main className="pt-28 md:pt-16 min-h-screen">
       <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="mb-10">
           <p
@@ -777,7 +727,7 @@ function VideosPage() {
   };
 
   return (
-    <main className="pt-16 min-h-screen">
+    <main className="pt-28 md:pt-16 min-h-screen">
       <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="mb-10">
           <p
@@ -999,7 +949,7 @@ function VideosPage() {
 // ── PRICING PAGE ───────────────────────────────────────────────────────────
 function PricingPage() {
   return (
-    <main className="pt-16 min-h-screen">
+    <main className="pt-28 md:pt-16 min-h-screen">
       <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="mb-14 max-w-xl">
           <p
