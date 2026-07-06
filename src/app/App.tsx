@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, Check, ArrowUpRight, Camera, Film, Image, Package } from "lucide-react";
+import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import Admin from "./admin/Admin";
 import Login from "./admin/Login";
 import ProtectedRoute from "./admin/ProtectedRoute";
@@ -13,77 +13,6 @@ import {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Page = "home" | "photos" | "videos" | "pricing" | "login" | "admin";
-
-const PLANS = [
-  {
-    name: "Essencial",
-    price: "R$ 890",
-    period: "por sessão",
-    description: "Ideal para registros pontuais e pequenas produções.",
-    icon: Camera,
-    features: [
-      "Até 4 horas de captação",
-      "100 fotos editadas ou 1 vídeo de até 3 min",
-      "Entrega em 10 dias úteis",
-      "1 revisão incluída",
-      "Galeria online compartilhável",
-    ],
-    cta: "Começar agora",
-    highlight: false,
-  },
-  {
-    name: "Profissional",
-    price: "R$ 1.890",
-    period: "por projeto",
-    description: "Para produções completas com maior cobertura e entrega.",
-    icon: Image,
-    features: [
-      "Até 8 horas de captação",
-      "300 fotos editadas + 1 vídeo de até 5 min",
-      "Entrega em 7 dias úteis",
-      "2 revisões incluídas",
-      "Galeria online premium",
-      "Arquivos em alta resolução",
-    ],
-    cta: "Mais escolhido",
-    highlight: true,
-  },
-  {
-    name: "Produção Completa",
-    price: "R$ 3.500",
-    period: "por projeto",
-    description: "Cobertura total para campanhas, eventos e produções exigentes.",
-    icon: Film,
-    features: [
-      "Captação ilimitada (até 2 dias)",
-      "Fotos ilimitadas + vídeo de até 15 min",
-      "Entrega expressa em 5 dias úteis",
-      "Revisões ilimitadas",
-      "Galeria online + USB com arquivos brutos",
-      "Diretor de arte incluso",
-      "Drone quando aplicável",
-    ],
-    cta: "Falar com a Sara",
-    highlight: false,
-  },
-  {
-    name: "Pacote Mensal",
-    price: "R$ 2.400",
-    period: "por mês",
-    description: "Para marcas e empresas com necessidade recorrente de conteúdo.",
-    icon: Package,
-    features: [
-      "4 sessões mensais de 3h cada",
-      "200 fotos + 4 vídeos curtos (até 2 min)",
-      "Entrega semanal",
-      "Gerenciamento de conteúdo",
-      "Reunião de briefing mensal",
-      "Desconto em produções extras",
-    ],
-    cta: "Assinar plano",
-    highlight: false,
-  },
-];
 
 const SERVICES = [
   {
@@ -110,7 +39,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname === "/admin") return "admin";
   if (pathname === "/fotos") return "photos";
   if (pathname === "/videos") return "videos";
-  if (pathname === "/planos") return "pricing";
+  if (pathname === "/contato" || pathname === "/planos") return "pricing";
   return "home";
 }
 
@@ -119,7 +48,7 @@ function pathFromPage(page: Page) {
     home: "/",
     photos: "/fotos",
     videos: "/videos",
-    pricing: "/planos",
+    pricing: "/contato",
     login: "/login",
     admin: "/admin",
   };
@@ -229,7 +158,7 @@ function Navbar({
     { label: "Início", page: "home" },
     { label: "Fotos", page: "photos" },
     { label: "Vídeos", page: "videos" },
-    { label: "Planos", page: "pricing" },
+    { label: "Contato", page: "pricing" },
   ];
 
   return (
@@ -281,7 +210,7 @@ function Navbar({
             className="hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={() => onNav("pricing")}
           >
-            Contratar
+            Contato
           </button>
         </div>
       </div>
@@ -324,7 +253,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               onClick={() => onNav("pricing")}
               className="inline-flex items-center gap-2 px-6 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
             >
-              Contratar
+              Contato
             </button>
           </div>
         </div>
@@ -400,7 +329,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           onClick={() => onNav("pricing")}
           className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
         >
-          Ver planos e preços <ArrowUpRight size={16} />
+          Falar no WhatsApp <ArrowUpRight size={16} />
         </button>
       </section>
     </main>
@@ -639,113 +568,80 @@ function VideosPage() {
 
 // ── PRICING PAGE ───────────────────────────────────────────────────────────
 function PricingPage() {
+  const whatsappUrl = "https://wa.me/5518996188589?text=Ol%C3%A1%2C%20Sara%21%20Vim%20pelo%20seu%20portf%C3%B3lio%20e%20quero%20falar%20sobre%20um%20projeto.";
+
   return (
     <main className="pt-28 md:pt-16 min-h-screen">
       <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
-        <div className="mb-14 max-w-xl">
-          <p
-            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
-            style={{ fontFamily: "DM Mono, monospace" }}
-          >
-            Investimento
-          </p>
-          <h1
-            className="text-5xl md:text-6xl mb-6"
-            style={{ fontFamily: "DM Serif Display, serif" }}
-          >
-            Planos e Preços
-          </h1>
-          <p className="text-muted-foreground leading-relaxed">
-            Projetos sob medida para cada necessidade. Todos os planos incluem briefing, produção e entrega editada. Para projetos personalizados, entre em contato.
-          </p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 items-start">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.name}
-              className={cn(
-                "flex flex-col border transition-all",
-                plan.highlight
-                  ? "border-accent bg-primary text-primary-foreground relative"
-                  : "border-border bg-card hover:border-accent/40"
-              )}
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-start">
+          <div>
+            <p
+              className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+              style={{ fontFamily: "DM Mono, monospace" }}
             >
-              {plan.highlight && (
-                <div className="absolute -top-3 inset-x-0 flex justify-center">
-                  <span className="bg-accent text-accent-foreground text-xs px-3 py-0.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-                    Mais Escolhido
-                  </span>
-                </div>
-              )}
+              Contato
+            </p>
+            <h1
+              className="text-5xl md:text-6xl mb-6"
+              style={{ fontFamily: "DM Serif Display, serif" }}
+            >
+              Vamos conversar sobre o seu projeto?
+            </h1>
+            <p className="text-muted-foreground leading-relaxed max-w-xl mb-8">
+              Para orçamentos, parcerias ou dúvidas sobre audiovisual, fotografia mobile e tráfego pago, fale diretamente com a Sara pelo WhatsApp.
+            </p>
 
-              <div className="p-6 border-b border-border/30">
-                <div className="flex items-center gap-2 mb-4">
-                  <plan.icon size={16} className={plan.highlight ? "text-accent" : "text-accent"} />
-                  <p className="text-xs tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-                    {plan.name}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground text-sm tracking-widest uppercase hover:bg-accent hover:text-accent-foreground transition-all"
+            >
+              Chamar no WhatsApp <ArrowUpRight size={16} />
+            </a>
+          </div>
+
+          <div className="bg-card border border-border p-6 md:p-8">
+            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
+              Informações
+            </p>
+            <div className="space-y-6">
+              {[
+                { label: "WhatsApp", value: "+55 18 99618-8589", href: whatsappUrl },
+                { label: "E-mail", value: "smarquesmedia@gmail.com", href: "mailto:smarquesmedia@gmail.com" },
+                { label: "Cidade", value: "Birigui, SP" },
+                { label: "Nome", value: "Sara Marques" },
+              ].map((item) => (
+                <div key={item.label} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                  <p className="text-xs tracking-widest uppercase text-muted-foreground mb-1" style={{ fontFamily: "DM Mono, monospace" }}>
+                    {item.label}
                   </p>
-                </div>
-                <p
-                  className="text-4xl mb-0.5"
-                  style={{ fontFamily: "DM Serif Display, serif" }}
-                >
-                  {plan.price}
-                </p>
-                <p className={cn("text-xs", plan.highlight ? "opacity-60" : "text-muted-foreground")}>
-                  {plan.period}
-                </p>
-                <p className={cn("text-sm mt-4 leading-relaxed", plan.highlight ? "opacity-70" : "text-muted-foreground")}>
-                  {plan.description}
-                </p>
-              </div>
-
-              <div className="p-6 flex-1">
-                <ul className="space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <Check
-                        size={14}
-                        className={cn("mt-0.5 shrink-0", plan.highlight ? "text-accent" : "text-accent")}
-                      />
-                      <span className={plan.highlight ? "opacity-85" : "text-muted-foreground"}>
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-6 pt-0">
-                <button
-                  className={cn(
-                    "w-full py-3 text-xs tracking-widest uppercase transition-all",
-                    plan.highlight
-                      ? "bg-accent text-accent-foreground hover:opacity-90"
-                      : "bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+                  {item.href ? (
+                    <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="text-foreground hover:text-accent transition-colors">
+                      {item.value}
+                    </a>
+                  ) : (
+                    <p>{item.value}</p>
                   )}
-                >
-                  {plan.highlight ? plan.cta : plan.cta}
-                </button>
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* FAQ / info strip */}
         <div className="mt-16 border-t border-border pt-12 grid md:grid-cols-3 gap-8">
           {[
             {
-              title: "Forma de pagamento",
-              text: "50% na assinatura do contrato e 50% na entrega. Parcelamento disponível via cartão de crédito em até 6x sem juros.",
+              title: "Audiovisual",
+              text: "Vídeos dinâmicos para marcas, eventos e conteúdos digitais com foco em narrativa e conversão.",
             },
             {
-              title: "Deslocamentos",
-              text: "Projetos em Birigui e região já inclusos. Para outras cidades e estados, deslocamento sob consulta.",
+              title: "Fotografia",
+              text: "Imagens para produtos, festas, eventos e posicionamento visual de marcas.",
             },
             {
-              title: "Pacotes personalizados",
-              text: "Nenhum projeto é igual. Posso montar um pacote específico para a sua demanda. Basta me enviar uma mensagem.",
+              title: "Tráfego pago",
+              text: "Campanhas estratégicas no Meta e Google com análise de dados, leads e vendas.",
             },
           ].map((item) => (
             <div key={item.title}>
@@ -754,37 +650,10 @@ function PricingPage() {
             </div>
           ))}
         </div>
-
-        {/* Contact block */}
-        <div className="mt-16 bg-card border border-border p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-          <div>
-            <h2
-              className="text-3xl md:text-4xl mb-3"
-              style={{ fontFamily: "DM Serif Display, serif" }}
-            >
-              Tem um projeto em mente?
-            </h2>
-            <p className="text-muted-foreground max-w-sm">
-              Entre em contato para conversarmos sobre a sua ideia. Respondo em até 24h.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 shrink-0">
-            <a
-              href="mailto:smarquesmedia@gmail.com"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
-            >
-              smarquesmedia@gmail.com <ArrowUpRight size={14} />
-            </a>
-            <p className="text-xs text-muted-foreground text-center" style={{ fontFamily: "DM Mono, monospace" }}>
-              +55 18 99618-8589
-            </p>
-          </div>
-        </div>
       </div>
     </main>
   );
 }
-
 // ── Footer ─────────────────────────────────────────────────────────────────
 function Footer({ onNav }: { onNav: (p: Page) => void }) {
   return (
@@ -809,7 +678,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
                   onClick={() => onNav(p)}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors capitalize"
                 >
-                  {p === "home" ? "Início" : p === "photos" ? "Fotos" : p === "videos" ? "Vídeos" : "Planos"}
+                  {p === "home" ? "Início" : p === "photos" ? "Fotos" : p === "videos" ? "Vídeos" : "Contato"}
                 </button>
               </li>
             ))}
