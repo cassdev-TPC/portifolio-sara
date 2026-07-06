@@ -1,36 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { FormEvent } from "react";
 import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, Check, ArrowUpRight, Camera, Film, Image, Package } from "lucide-react";
+import Admin from "./admin/Admin";
+import Login from "./admin/Login";
+import ProtectedRoute from "./admin/ProtectedRoute";
+import {
+  DEFAULT_PHOTO_CATEGORIES,
+  DEFAULT_VIDEO_CATEGORIES,
+  getCategories,
+  type GalleryItem,
+  listGalleryItems,
+} from "../lib/gallery";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type Page = "home" | "photos" | "videos" | "pricing";
-type PortfolioPhoto = {
-  id: number;
-  src: string;
-  thumb: string;
-  alt: string;
-  category: string;
-  client: string;
-};
-type PortfolioVideo = {
-  id: number;
-  title: string;
-  description: string;
-  duration: string;
-  category: string;
-  src: string;
-  thumb: string;
-  year: string;
-  client: string;
-};
-
-// ── Data ───────────────────────────────────────────────────────────────────
-const GALLERY_PHOTOS: PortfolioPhoto[] = [];
-const VIDEOS: PortfolioVideo[] = [];
-const PHOTO_STORAGE_KEY = "sara-marques-photos";
-const VIDEO_STORAGE_KEY = "sara-marques-videos";
-const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Produtos", "Eventos", "Retratos", "Bastidores"];
-const DEFAULT_VIDEO_CATEGORIES = ["Todos", "Storytelling", "Tráfego Pago", "Eventos", "Produtos"];
+type Page = "home" | "photos" | "videos" | "pricing" | "login" | "admin";
 
 const PLANS = [
   {
@@ -123,32 +105,26 @@ function cn(...classes: (string | undefined | false | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
+function pageFromPath(pathname: string): Page {
+  if (pathname === "/login" || pathname === "/admin/login") return "login";
+  if (pathname === "/admin") return "admin";
+  if (pathname === "/fotos") return "photos";
+  if (pathname === "/videos") return "videos";
+  if (pathname === "/planos") return "pricing";
+  return "home";
 }
 
-function loadStoredItems<T>(key: string, fallback: T[]): T[] {
-  if (typeof window === "undefined") return fallback;
+function pathFromPage(page: Page) {
+  const paths: Record<Page, string> = {
+    home: "/",
+    photos: "/fotos",
+    videos: "/videos",
+    pricing: "/planos",
+    login: "/login",
+    admin: "/admin",
+  };
 
-  try {
-    const stored = window.localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function getCategories(items: { category: string }[], defaults: string[]) {
-  const unique = new Set(defaults);
-  items.forEach((item) => {
-    if (item.category.trim()) unique.add(item.category.trim());
-  });
-  return Array.from(unique);
+  return paths[page];
 }
 
 // ── Lightbox ───────────────────────────────────────────────────────────────
@@ -157,7 +133,7 @@ function Lightbox({
   initialIndex,
   onClose,
 }: {
-  photos: PortfolioPhoto[];
+  photos: GalleryItem[];
   initialIndex: number;
   onClose: () => void;
 }) {
@@ -209,16 +185,16 @@ function Lightbox({
 
       <div className="flex flex-col items-center max-w-5xl w-full px-16" onClick={(e) => e.stopPropagation()}>
         <img
-          src={photo.src}
-          alt={photo.alt}
+          src={photo.url}
+          alt={photo.name}
           className="max-h-[80vh] w-auto object-contain"
           style={{ maxWidth: "100%" }}
         />
         <div className="mt-4 text-center">
           <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-            {photo.category} — {photo.client}
+            {photo.category}
           </p>
-          <p className="text-white/50 text-xs mt-1">{photo.alt}</p>
+          <p className="text-white/50 text-xs mt-1">{photo.name}</p>
         </div>
         <div className="flex gap-1.5 mt-4">
           {photos.map((_, i) => (
@@ -433,23 +409,18 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
 // ── PHOTOS PAGE ────────────────────────────────────────────────────────────
 function PhotosPage() {
-  const [photos, setPhotos] = useState<PortfolioPhoto[]>(() => loadStoredItems(PHOTO_STORAGE_KEY, GALLERY_PHOTOS));
+  const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [client, setClient] = useState("");
-  const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify(photos));
-    } catch {
-      setError("Esta foto é muito grande para salvar neste navegador.");
-    }
-  }, [photos]);
+    listGalleryItems("photos")
+      .then(setPhotos)
+      .catch(() => setError("Não foi possível carregar as fotos."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const categories = useMemo(() => getCategories(photos, DEFAULT_PHOTO_CATEGORIES), [photos]);
 
@@ -457,43 +428,6 @@ function PhotosPage() {
     filter === "Todos"
       ? photos
       : photos.filter((p) => p.category === filter);
-
-  const addPhoto = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-
-    try {
-      const source = file ? await readFileAsDataUrl(file) : url.trim();
-      if (!source) {
-        setError("Selecione uma foto ou cole um link.");
-        return;
-      }
-
-      const nextPhoto: PortfolioPhoto = {
-        id: Date.now(),
-        src: source,
-        thumb: source,
-        alt: title.trim() || "Foto de Sara Marques",
-        category: category.trim() || "Sem categoria",
-        client: client.trim() || "Sara Marques",
-      };
-
-      setPhotos((current) => [nextPhoto, ...current]);
-      setTitle("");
-      setCategory("");
-      setClient("");
-      setUrl("");
-      setFile(null);
-      event.currentTarget.reset();
-    } catch {
-      setError("Não foi possível adicionar esta foto.");
-    }
-  };
-
-  const removePhoto = (id: number) => {
-    setPhotos((current) => current.filter((photo) => photo.id !== id));
-    setLightbox(null);
-  };
 
   return (
     <main className="pt-28 md:pt-16 min-h-screen">
@@ -512,64 +446,12 @@ function PhotosPage() {
             Fotografias
           </h1>
           <p className="text-muted-foreground max-w-md leading-relaxed">
-            Galeria editável para organizar fotos por categoria.
+            Trabalhos fotográficos organizados por categoria.
           </p>
         </div>
 
-        <form onSubmit={addPhoto} className="mb-10 bg-card border border-border p-5 md:p-6 grid md:grid-cols-2 gap-4">
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Foto</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link da foto</span>
-            <input
-              type="url"
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://..."
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Título</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Nome da foto"
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
-            <input
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder="Produtos, Eventos, Retratos..."
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm md:col-span-2">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Marca ou cliente</span>
-            <input
-              value={client}
-              onChange={(event) => setClient(event.target.value)}
-              placeholder="Sara Marques"
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-            <button className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all">
-              Adicionar foto <ArrowUpRight size={15} />
-            </button>
-            {error && <p className="text-sm text-accent">{error}</p>}
-          </div>
-        </form>
+        {loading && <p className="text-muted-foreground mb-8">Carregando fotos...</p>}
+        {error && <p className="text-accent mb-8">{error}</p>}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
@@ -598,8 +480,8 @@ function PhotosPage() {
               onClick={() => setLightbox(photos.indexOf(photo))}
             >
               <img
-                src={photo.thumb}
-                alt={photo.alt}
+                src={photo.url}
+                alt={photo.name}
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
                 }}
@@ -614,25 +496,15 @@ function PhotosPage() {
                   >
                     {photo.category}
                   </p>
-                  <p className="text-white/70 text-xs mt-0.5">{photo.client}</p>
+                  <p className="text-white/70 text-xs mt-0.5">{photo.name}</p>
                 </div>
               </div>
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  removePhoto(photo.id);
-                }}
-                className="absolute top-3 right-3 p-2 bg-black/70 text-white hover:bg-accent hover:text-accent-foreground transition-colors"
-                aria-label="Excluir foto"
-              >
-                <X size={15} />
-              </button>
             </div>
           ))}
         </div>
 
-        {filtered.length === 0 && (
-          <p className="text-muted-foreground text-center py-20">Nenhuma foto cadastrada nesta categoria.</p>
+        {!loading && filtered.length === 0 && (
+          <p className="text-muted-foreground text-center py-20">Nenhuma foto publicada nesta categoria.</p>
         )}
       </div>
 
@@ -649,28 +521,18 @@ function PhotosPage() {
 
 // ── VIDEOS PAGE ────────────────────────────────────────────────────────────
 function VideosPage() {
-  const [videos, setVideos] = useState<PortfolioVideo[]>(() => loadStoredItems(VIDEO_STORAGE_KEY, VIDEOS));
+  const [videos, setVideos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
-  const [active, setActive] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [client, setClient] = useState("");
-  const [duration, setDuration] = useState("");
-  const [year, setYear] = useState(String(new Date().getFullYear()));
-  const [description, setDescription] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [coverUrl, setCoverUrl] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [active, setActive] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(VIDEO_STORAGE_KEY, JSON.stringify(videos));
-    } catch {
-      setError("Este vídeo é muito grande para salvar neste navegador.");
-    }
-  }, [videos]);
+    listGalleryItems("videos")
+      .then(setVideos)
+      .catch(() => setError("Não foi possível carregar os vídeos."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const categories = useMemo(() => getCategories(videos, DEFAULT_VIDEO_CATEGORIES), [videos]);
 
@@ -678,53 +540,6 @@ function VideosPage() {
     filter === "Todos"
       ? videos
       : videos.filter((v) => v.category === filter);
-
-  const addVideo = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-
-    try {
-      const source = videoFile ? await readFileAsDataUrl(videoFile) : videoUrl.trim();
-      const cover = coverFile ? await readFileAsDataUrl(coverFile) : coverUrl.trim();
-
-      if (!source) {
-        setError("Selecione um vídeo ou cole um link.");
-        return;
-      }
-
-      const nextVideo: PortfolioVideo = {
-        id: Date.now(),
-        title: title.trim() || "Novo vídeo",
-        description: description.trim() || "Projeto audiovisual de Sara Marques.",
-        duration: duration.trim() || "Vídeo",
-        category: category.trim() || "Sem categoria",
-        src: source,
-        thumb: cover,
-        year: year.trim() || String(new Date().getFullYear()),
-        client: client.trim() || "Sara Marques",
-      };
-
-      setVideos((current) => [nextVideo, ...current]);
-      setTitle("");
-      setCategory("");
-      setClient("");
-      setDuration("");
-      setYear(String(new Date().getFullYear()));
-      setDescription("");
-      setVideoUrl("");
-      setCoverUrl("");
-      setVideoFile(null);
-      setCoverFile(null);
-      event.currentTarget.reset();
-    } catch {
-      setError("Não foi possível adicionar este vídeo.");
-    }
-  };
-
-  const removeVideo = (id: number) => {
-    setVideos((current) => current.filter((video) => video.id !== id));
-    setActive(null);
-  };
 
   return (
     <main className="pt-28 md:pt-16 min-h-screen">
@@ -743,113 +558,12 @@ function VideosPage() {
             Vídeos
           </h1>
           <p className="text-muted-foreground max-w-md leading-relaxed">
-            Biblioteca editável para organizar vídeos por categoria.
+            Produções audiovisuais publicadas por categoria.
           </p>
         </div>
 
-        <form onSubmit={addVideo} className="mb-10 bg-card border border-border p-5 md:p-6 grid md:grid-cols-2 gap-4">
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Vídeo</span>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link do vídeo</span>
-            <input
-              type="url"
-              value={videoUrl}
-              onChange={(event) => setVideoUrl(event.target.value)}
-              placeholder="https://..."
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Capa</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)}
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link da capa</span>
-            <input
-              type="url"
-              value={coverUrl}
-              onChange={(event) => setCoverUrl(event.target.value)}
-              placeholder="https://..."
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Título</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Nome do vídeo"
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
-            <input
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder="Storytelling, Eventos..."
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Cliente</span>
-            <input
-              value={client}
-              onChange={(event) => setClient(event.target.value)}
-              placeholder="Sara Marques"
-              className="border border-border bg-background px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-2 text-sm">
-              <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Duração</span>
-              <input
-                value={duration}
-                onChange={(event) => setDuration(event.target.value)}
-                placeholder="0:30"
-                className="border border-border bg-background px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Ano</span>
-              <input
-                value={year}
-                onChange={(event) => setYear(event.target.value)}
-                placeholder="2026"
-                className="border border-border bg-background px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-          <label className="flex flex-col gap-2 text-sm md:col-span-2">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Descrição</span>
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Resumo do projeto"
-              rows={3}
-              className="border border-border bg-background px-3 py-2 text-sm resize-none"
-            />
-          </label>
-          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-            <button className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all">
-              Adicionar vídeo <ArrowUpRight size={15} />
-            </button>
-            {error && <p className="text-sm text-accent">{error}</p>}
-          </div>
-        </form>
+        {loading && <p className="text-muted-foreground mb-8">Carregando vídeos...</p>}
+        {error && <p className="text-accent mb-8">{error}</p>}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
@@ -878,15 +592,7 @@ function VideosPage() {
               onClick={() => setActive(v.id === active ? null : v.id)}
             >
               <div className="relative aspect-video bg-muted overflow-hidden">
-                {v.thumb ? (
-                  <img
-                    src={v.thumb}
-                    alt={v.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                  />
-                ) : (
-                  <video src={v.src} className="w-full h-full object-cover" muted />
-                )}
+                <video src={v.url} className="w-full h-full object-cover" muted />
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center">
                   <div className={cn(
                     "w-14 h-14 rounded-full border-2 border-white/80 flex items-center justify-center transition-all",
@@ -896,41 +602,26 @@ function VideosPage() {
                   </div>
                 </div>
                 <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-0.5" style={{ fontFamily: "DM Mono, monospace" }}>
-                  {v.duration}
+                  Vídeo
                 </div>
                 <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs px-2 py-0.5 uppercase tracking-wider">
                   {v.category}
                 </div>
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    removeVideo(v.id);
-                  }}
-                  className="absolute top-3 right-3 p-2 bg-black/70 text-white hover:bg-accent hover:text-accent-foreground transition-colors"
-                  aria-label="Excluir vídeo"
-                >
-                  <X size={15} />
-                </button>
               </div>
 
               <div className="p-5">
                 <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-                  {v.client} · {v.year}
+                  {v.category}
                 </p>
                 <h3 className="font-medium text-base leading-snug mb-2 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                  {v.title}
+                  {v.name}
                 </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
-                  {v.description}
-                </p>
               </div>
 
               {active === v.id && (
                 <div className="px-5 pb-5 pt-0">
                   <div className="bg-secondary border border-border p-4 text-sm text-muted-foreground leading-relaxed space-y-3">
-                    <video src={v.src} controls className="w-full bg-black" />
-                    <p className="font-medium text-foreground mb-1">Sobre o projeto</p>
-                    <p>{v.description}</p>
+                    <video src={v.url} controls className="w-full bg-black" />
                   </div>
                 </div>
               )}
@@ -938,8 +629,8 @@ function VideosPage() {
           ))}
         </div>
 
-        {filtered.length === 0 && (
-          <p className="text-muted-foreground text-center py-20">Nenhum vídeo cadastrado nesta categoria.</p>
+        {!loading && filtered.length === 0 && (
+          <p className="text-muted-foreground text-center py-20">Nenhum vídeo publicado nesta categoria.</p>
         )}
       </div>
     </main>
@@ -1149,7 +840,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
 
 // ── APP ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname));
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -1161,8 +852,15 @@ export default function App() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
+  useEffect(() => {
+    const syncPage = () => setPage(pageFromPath(window.location.pathname));
+    window.addEventListener("popstate", syncPage);
+    return () => window.removeEventListener("popstate", syncPage);
+  }, []);
+
   const navigate = (p: Page) => {
     setPage(p);
+    window.history.pushState({}, "", pathFromPage(p));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -1175,9 +873,15 @@ export default function App() {
         {page === "photos" && <PhotosPage />}
         {page === "videos" && <VideosPage />}
         {page === "pricing" && <PricingPage />}
+        {page === "login" && <Login />}
+        {page === "admin" && (
+          <ProtectedRoute>
+            {(session) => <Admin session={session} />}
+          </ProtectedRoute>
+        )}
       </div>
 
-      <Footer onNav={navigate} />
+      {page !== "login" && page !== "admin" && <Footer onNav={navigate} />}
     </div>
   );
 }
