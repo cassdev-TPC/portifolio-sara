@@ -1,0 +1,1233 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { FormEvent } from "react";
+import { X, Menu, Sun, Moon, Play, ChevronLeft, ChevronRight, Check, ArrowUpRight, Camera, Film, Image, Package } from "lucide-react";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+type Page = "home" | "photos" | "videos" | "pricing";
+type PortfolioPhoto = {
+  id: number;
+  src: string;
+  thumb: string;
+  alt: string;
+  category: string;
+  client: string;
+};
+type PortfolioVideo = {
+  id: number;
+  title: string;
+  description: string;
+  duration: string;
+  category: string;
+  src: string;
+  thumb: string;
+  year: string;
+  client: string;
+};
+
+// ── Data ───────────────────────────────────────────────────────────────────
+const GALLERY_PHOTOS: PortfolioPhoto[] = [];
+const VIDEOS: PortfolioVideo[] = [];
+const PHOTO_STORAGE_KEY = "sara-marques-photos";
+const VIDEO_STORAGE_KEY = "sara-marques-videos";
+const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Produtos", "Eventos", "Retratos", "Bastidores"];
+const DEFAULT_VIDEO_CATEGORIES = ["Todos", "Storytelling", "Tráfego Pago", "Eventos", "Produtos"];
+
+const PLANS = [
+  {
+    name: "Essencial",
+    price: "R$ 890",
+    period: "por sessão",
+    description: "Ideal para registros pontuais e pequenas produções.",
+    icon: Camera,
+    features: [
+      "Até 4 horas de captação",
+      "100 fotos editadas ou 1 vídeo de até 3 min",
+      "Entrega em 10 dias úteis",
+      "1 revisão incluída",
+      "Galeria online compartilhável",
+    ],
+    cta: "Começar agora",
+    highlight: false,
+  },
+  {
+    name: "Profissional",
+    price: "R$ 1.890",
+    period: "por projeto",
+    description: "Para produções completas com maior cobertura e entrega.",
+    icon: Image,
+    features: [
+      "Até 8 horas de captação",
+      "300 fotos editadas + 1 vídeo de até 5 min",
+      "Entrega em 7 dias úteis",
+      "2 revisões incluídas",
+      "Galeria online premium",
+      "Arquivos em alta resolução",
+    ],
+    cta: "Mais escolhido",
+    highlight: true,
+  },
+  {
+    name: "Produção Completa",
+    price: "R$ 3.500",
+    period: "por projeto",
+    description: "Cobertura total para campanhas, eventos e produções exigentes.",
+    icon: Film,
+    features: [
+      "Captação ilimitada (até 2 dias)",
+      "Fotos ilimitadas + vídeo de até 15 min",
+      "Entrega expressa em 5 dias úteis",
+      "Revisões ilimitadas",
+      "Galeria online + USB com arquivos brutos",
+      "Diretor de arte incluso",
+      "Drone quando aplicável",
+    ],
+    cta: "Falar com a Sara",
+    highlight: false,
+  },
+  {
+    name: "Pacote Mensal",
+    price: "R$ 2.400",
+    period: "por mês",
+    description: "Para marcas e empresas com necessidade recorrente de conteúdo.",
+    icon: Package,
+    features: [
+      "4 sessões mensais de 3h cada",
+      "200 fotos + 4 vídeos curtos (até 2 min)",
+      "Entrega semanal",
+      "Gerenciamento de conteúdo",
+      "Reunião de briefing mensal",
+      "Desconto em produções extras",
+    ],
+    cta: "Assinar plano",
+    highlight: false,
+  },
+];
+
+const SERVICES = [
+  {
+    title: "Videografia & Storytelling",
+    desc: "Criação de vídeos dinâmicos e autênticos focados em identidade, desde o roteiro à edição final, com estratégias de storytelling feitas para reter a atenção e despertar o desejo de compra.",
+  },
+  {
+    title: "Tráfego Pago",
+    desc: "Planeamento e gestão de campanhas de anúncios estratégicas no Meta e Google, focadas na escala do seu negócio através da análise de dados, geração de leads e aumento real de vendas.",
+  },
+  {
+    title: "Fotografia Publicitária",
+    desc: "Captura de imagens de alta qualidade com um olhar direcionado para o posicionamento da sua marca, cobrindo produtos, festas e eventos com edição profissional e foco na sua identidade visual.",
+  },
+];
+
+// ── Utility ────────────────────────────────────────────────────────────────
+function cn(...classes: (string | undefined | false | null)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadStoredItems<T>(key: string, fallback: T[]): T[] {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getCategories(items: { category: string }[], defaults: string[]) {
+  const unique = new Set(defaults);
+  items.forEach((item) => {
+    if (item.category.trim()) unique.add(item.category.trim());
+  });
+  return Array.from(unique);
+}
+
+// ── Lightbox ───────────────────────────────────────────────────────────────
+function Lightbox({
+  photos,
+  initialIndex,
+  onClose,
+}: {
+  photos: PortfolioPhoto[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [current, setCurrent] = useState(initialIndex);
+
+  const prev = useCallback(() => setCurrent((i) => (i - 1 + photos.length) % photos.length), [photos.length]);
+  const next = useCallback(() => setCurrent((i) => (i + 1) % photos.length), [photos.length]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose, prev, next]);
+
+  const photo = photos[current];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+      onClick={onClose}
+    >
+      <button
+        className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+        onClick={onClose}
+        aria-label="Fechar"
+      >
+        <X size={28} />
+      </button>
+
+      <button
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
+        onClick={(e) => { e.stopPropagation(); prev(); }}
+        aria-label="Anterior"
+      >
+        <ChevronLeft size={36} />
+      </button>
+
+      <button
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
+        onClick={(e) => { e.stopPropagation(); next(); }}
+        aria-label="Próxima"
+      >
+        <ChevronRight size={36} />
+      </button>
+
+      <div className="flex flex-col items-center max-w-5xl w-full px-16" onClick={(e) => e.stopPropagation()}>
+        <img
+          src={photo.src}
+          alt={photo.alt}
+          className="max-h-[80vh] w-auto object-contain"
+          style={{ maxWidth: "100%" }}
+        />
+        <div className="mt-4 text-center">
+          <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+            {photo.category} — {photo.client}
+          </p>
+          <p className="text-white/50 text-xs mt-1">{photo.alt}</p>
+        </div>
+        <div className="flex gap-1.5 mt-4">
+          {photos.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full transition-all",
+                i === current ? "bg-white w-4" : "bg-white/30"
+              )}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────
+function Navbar({
+  current,
+  onNav,
+  dark,
+  onToggleDark,
+}: {
+  current: Page;
+  onNav: (p: Page) => void;
+  dark: boolean;
+  onToggleDark: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const links: { label: string; page: Page }[] = [
+    { label: "Início", page: "home" },
+    { label: "Fotos", page: "photos" },
+    { label: "Vídeos", page: "videos" },
+    { label: "Planos", page: "pricing" },
+  ];
+
+  return (
+    <nav className="fixed top-0 inset-x-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+        <button
+          onClick={() => onNav("home")}
+          className="font-serif text-xl tracking-tight leading-none"
+          style={{ fontFamily: "DM Serif Display, serif" }}
+        >
+          Sara Marques
+          <span className="text-accent ml-1.5 text-sm" style={{ fontFamily: "DM Mono, monospace" }}>
+            ✦
+          </span>
+        </button>
+
+        {/* Desktop links */}
+        <ul className="hidden md:flex items-center gap-8">
+          {links.map((l) => (
+            <li key={l.page}>
+              <button
+                onClick={() => onNav(l.page)}
+                className={cn(
+                  "text-sm tracking-wide transition-colors relative pb-0.5",
+                  current === l.page
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {l.label}
+                {current === l.page && (
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-accent" />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleDark}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            aria-label="Alternar tema"
+          >
+            {dark ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+
+          <button
+            className="hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            onClick={() => onNav("pricing")}
+          >
+            Contratar
+          </button>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setOpen(!open)}
+            aria-label="Menu"
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <div className="md:hidden bg-background border-t border-border px-5 pb-5 pt-3 flex flex-col gap-4">
+          {links.map((l) => (
+            <button
+              key={l.page}
+              onClick={() => { onNav(l.page); setOpen(false); }}
+              className={cn(
+                "text-left text-base py-1 border-b border-border transition-colors",
+                current === l.page ? "text-accent" : "text-muted-foreground"
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
+          <button
+            className="mt-2 px-4 py-2.5 text-xs tracking-widest uppercase bg-primary text-primary-foreground"
+            onClick={() => { onNav("pricing"); setOpen(false); }}
+          >
+            Contratar agora
+          </button>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+// ── HOME PAGE ──────────────────────────────────────────────────────────────
+function HomePage({ onNav }: { onNav: (p: Page) => void }) {
+  return (
+    <main className="pt-16">
+      {/* Hero */}
+      <section className="min-h-[calc(100vh-4rem)] grid md:grid-cols-2">
+        {/* Left — text */}
+        <div className="flex flex-col justify-center px-8 md:px-16 lg:px-20 py-16 md:py-24">
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-accent mb-8"
+            style={{ fontFamily: "DM Mono, monospace" }}
+          >
+            Audiovisual · Birigui, SP
+          </p>
+          <h1
+            className="text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-8"
+            style={{ fontFamily: "DM Serif Display, serif" }}
+          >
+            A imagem
+            <br />
+            como
+            <br />
+            <em className="not-italic text-accent">linguagem.</em>
+          </h1>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => onNav("photos")}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
+            >
+              Ver portfólio <ArrowUpRight size={15} />
+            </button>
+            <button
+              onClick={() => onNav("pricing")}
+              className="inline-flex items-center gap-2 px-6 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
+            >
+              Contratar
+            </button>
+          </div>
+        </div>
+
+        {/* Right — image */}
+        <div className="relative hidden md:block bg-muted overflow-hidden">
+          <img
+            src="/assets/sara-marques.png"
+            alt="Sara Marques"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div className="absolute bottom-8 left-8 right-8">
+            <p className="text-white/80 text-xs tracking-[0.2em] uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+              Sara Marques · Birigui, SP
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section className="bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start">
+          <div className="md:col-span-2">
+            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+              Sobre mim
+            </p>
+            <img
+              src="/assets/sara-marques.png"
+              alt="Sara Marques"
+              className="w-full object-cover bg-muted"
+              style={{ aspectRatio: "4/5" }}
+            />
+          </div>
+          <div className="md:col-span-3 flex flex-col justify-center">
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Olá! Eu sou a Sara Marques, tenho 19 anos e sou apaixonada por transformar ideias em resultados reais. Sou cristã, e é o que guia minha ética e dedicação em tudo o que faço.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Atualmente, curso Publicidade e Propaganda no Unisalesiano de Araçatuba, mergulhando diariamente no universo da comunicação estratégica.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Minha rotina é dividida entre a precisão dos dados e a sensibilidade da lente: atuo como Gestora de Tráfego Pago em uma agência de publicidade em Birigui e, simultaneamente, dou vida a marcas através do audiovisual como Videomaker e Fotógrafa Mobile.
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              Unir a faculdade com a prática de agência me permite entregar um trabalho que não é apenas "bonito", mas focado em conversão.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Services */}
+      <section className="py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-12">
+            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+              Serviços
+            </p>
+            <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
+              O que eu faço
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+            {SERVICES.map((s) => (
+              <div key={s.title} className="bg-background p-8 hover:bg-card transition-colors group">
+                <h3 className="text-lg font-medium mb-3 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                  {s.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA strip */}
+      <section className="bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center">
+        <p className="text-xs tracking-[0.3em] uppercase opacity-50 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+          Vamos trabalhar juntos
+        </p>
+        <h2
+          className="text-3xl md:text-5xl mb-8"
+          style={{ fontFamily: "DM Serif Display, serif" }}
+        >
+          Seu próximo projeto começa aqui.
+        </h2>
+        <button
+          onClick={() => onNav("pricing")}
+          className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
+        >
+          Ver planos e preços <ArrowUpRight size={16} />
+        </button>
+      </section>
+    </main>
+  );
+}
+
+// ── PHOTOS PAGE ────────────────────────────────────────────────────────────
+function PhotosPage() {
+  const [photos, setPhotos] = useState<PortfolioPhoto[]>(() => loadStoredItems(PHOTO_STORAGE_KEY, GALLERY_PHOTOS));
+  const [filter, setFilter] = useState("Todos");
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [client, setClient] = useState("");
+  const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify(photos));
+    } catch {
+      setError("Esta foto é muito grande para salvar neste navegador.");
+    }
+  }, [photos]);
+
+  const categories = useMemo(() => getCategories(photos, DEFAULT_PHOTO_CATEGORIES), [photos]);
+
+  const filtered =
+    filter === "Todos"
+      ? photos
+      : photos.filter((p) => p.category === filter);
+
+  const addPhoto = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    try {
+      const source = file ? await readFileAsDataUrl(file) : url.trim();
+      if (!source) {
+        setError("Selecione uma foto ou cole um link.");
+        return;
+      }
+
+      const nextPhoto: PortfolioPhoto = {
+        id: Date.now(),
+        src: source,
+        thumb: source,
+        alt: title.trim() || "Foto de Sara Marques",
+        category: category.trim() || "Sem categoria",
+        client: client.trim() || "Sara Marques",
+      };
+
+      setPhotos((current) => [nextPhoto, ...current]);
+      setTitle("");
+      setCategory("");
+      setClient("");
+      setUrl("");
+      setFile(null);
+      event.currentTarget.reset();
+    } catch {
+      setError("Não foi possível adicionar esta foto.");
+    }
+  };
+
+  const removePhoto = (id: number) => {
+    setPhotos((current) => current.filter((photo) => photo.id !== id));
+    setLightbox(null);
+  };
+
+  return (
+    <main className="pt-16 min-h-screen">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
+        <div className="mb-10">
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+            style={{ fontFamily: "DM Mono, monospace" }}
+          >
+            Galeria
+          </p>
+          <h1
+            className="text-5xl md:text-6xl mb-6"
+            style={{ fontFamily: "DM Serif Display, serif" }}
+          >
+            Fotografias
+          </h1>
+          <p className="text-muted-foreground max-w-md leading-relaxed">
+            Galeria editável para organizar fotos por categoria.
+          </p>
+        </div>
+
+        <form onSubmit={addPhoto} className="mb-10 bg-card border border-border p-5 md:p-6 grid md:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Foto</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link da foto</span>
+            <input
+              type="url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://..."
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Título</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Nome da foto"
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
+            <input
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder="Produtos, Eventos, Retratos..."
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm md:col-span-2">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Marca ou cliente</span>
+            <input
+              value={client}
+              onChange={(event) => setClient(event.target.value)}
+              placeholder="Sara Marques"
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+            <button className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all">
+              Adicionar foto <ArrowUpRight size={15} />
+            </button>
+            {error && <p className="text-sm text-accent">{error}</p>}
+          </div>
+        </form>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={cn(
+                "px-4 py-1.5 text-xs tracking-wide uppercase transition-all",
+                filter === cat
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Masonry-style grid */}
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-3 space-y-3">
+          {filtered.map((photo, i) => (
+            <div
+              key={photo.id}
+              className="break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted"
+              onClick={() => setLightbox(photos.indexOf(photo))}
+            >
+              <img
+                src={photo.thumb}
+                alt={photo.alt}
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+                className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                loading={i > 3 ? "lazy" : undefined}
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-end p-4">
+                <div className="translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                  <p
+                    className="text-white text-xs tracking-widest uppercase"
+                    style={{ fontFamily: "DM Mono, monospace" }}
+                  >
+                    {photo.category}
+                  </p>
+                  <p className="text-white/70 text-xs mt-0.5">{photo.client}</p>
+                </div>
+              </div>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removePhoto(photo.id);
+                }}
+                className="absolute top-3 right-3 p-2 bg-black/70 text-white hover:bg-accent hover:text-accent-foreground transition-colors"
+                aria-label="Excluir foto"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <p className="text-muted-foreground text-center py-20">Nenhuma foto cadastrada nesta categoria.</p>
+        )}
+      </div>
+
+      {lightbox !== null && (
+        <Lightbox
+          photos={photos}
+          initialIndex={lightbox}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+    </main>
+  );
+}
+
+// ── VIDEOS PAGE ────────────────────────────────────────────────────────────
+function VideosPage() {
+  const [videos, setVideos] = useState<PortfolioVideo[]>(() => loadStoredItems(VIDEO_STORAGE_KEY, VIDEOS));
+  const [filter, setFilter] = useState("Todos");
+  const [active, setActive] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [client, setClient] = useState("");
+  const [duration, setDuration] = useState("");
+  const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIDEO_STORAGE_KEY, JSON.stringify(videos));
+    } catch {
+      setError("Este vídeo é muito grande para salvar neste navegador.");
+    }
+  }, [videos]);
+
+  const categories = useMemo(() => getCategories(videos, DEFAULT_VIDEO_CATEGORIES), [videos]);
+
+  const filtered =
+    filter === "Todos"
+      ? videos
+      : videos.filter((v) => v.category === filter);
+
+  const addVideo = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    try {
+      const source = videoFile ? await readFileAsDataUrl(videoFile) : videoUrl.trim();
+      const cover = coverFile ? await readFileAsDataUrl(coverFile) : coverUrl.trim();
+
+      if (!source) {
+        setError("Selecione um vídeo ou cole um link.");
+        return;
+      }
+
+      const nextVideo: PortfolioVideo = {
+        id: Date.now(),
+        title: title.trim() || "Novo vídeo",
+        description: description.trim() || "Projeto audiovisual de Sara Marques.",
+        duration: duration.trim() || "Vídeo",
+        category: category.trim() || "Sem categoria",
+        src: source,
+        thumb: cover,
+        year: year.trim() || String(new Date().getFullYear()),
+        client: client.trim() || "Sara Marques",
+      };
+
+      setVideos((current) => [nextVideo, ...current]);
+      setTitle("");
+      setCategory("");
+      setClient("");
+      setDuration("");
+      setYear(String(new Date().getFullYear()));
+      setDescription("");
+      setVideoUrl("");
+      setCoverUrl("");
+      setVideoFile(null);
+      setCoverFile(null);
+      event.currentTarget.reset();
+    } catch {
+      setError("Não foi possível adicionar este vídeo.");
+    }
+  };
+
+  const removeVideo = (id: number) => {
+    setVideos((current) => current.filter((video) => video.id !== id));
+    setActive(null);
+  };
+
+  return (
+    <main className="pt-16 min-h-screen">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
+        <div className="mb-10">
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+            style={{ fontFamily: "DM Mono, monospace" }}
+          >
+            Produções
+          </p>
+          <h1
+            className="text-5xl md:text-6xl mb-6"
+            style={{ fontFamily: "DM Serif Display, serif" }}
+          >
+            Vídeos
+          </h1>
+          <p className="text-muted-foreground max-w-md leading-relaxed">
+            Biblioteca editável para organizar vídeos por categoria.
+          </p>
+        </div>
+
+        <form onSubmit={addVideo} className="mb-10 bg-card border border-border p-5 md:p-6 grid md:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Vídeo</span>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link do vídeo</span>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(event) => setVideoUrl(event.target.value)}
+              placeholder="https://..."
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Capa</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)}
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Link da capa</span>
+            <input
+              type="url"
+              value={coverUrl}
+              onChange={(event) => setCoverUrl(event.target.value)}
+              placeholder="https://..."
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Título</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Nome do vídeo"
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
+            <input
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder="Storytelling, Eventos..."
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Cliente</span>
+            <input
+              value={client}
+              onChange={(event) => setClient(event.target.value)}
+              placeholder="Sara Marques"
+              className="border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-2 text-sm">
+              <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Duração</span>
+              <input
+                value={duration}
+                onChange={(event) => setDuration(event.target.value)}
+                placeholder="0:30"
+                className="border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm">
+              <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Ano</span>
+              <input
+                value={year}
+                onChange={(event) => setYear(event.target.value)}
+                placeholder="2026"
+                className="border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+          <label className="flex flex-col gap-2 text-sm md:col-span-2">
+            <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Descrição</span>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Resumo do projeto"
+              rows={3}
+              className="border border-border bg-background px-3 py-2 text-sm resize-none"
+            />
+          </label>
+          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+            <button className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all">
+              Adicionar vídeo <ArrowUpRight size={15} />
+            </button>
+            {error && <p className="text-sm text-accent">{error}</p>}
+          </div>
+        </form>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={cn(
+                "px-4 py-1.5 text-xs tracking-wide uppercase transition-all",
+                filter === cat
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Video grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {filtered.map((v) => (
+            <div
+              key={v.id}
+              className="group cursor-pointer bg-card border border-border hover:border-accent/40 transition-all"
+              onClick={() => setActive(v.id === active ? null : v.id)}
+            >
+              <div className="relative aspect-video bg-muted overflow-hidden">
+                {v.thumb ? (
+                  <img
+                    src={v.thumb}
+                    alt={v.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                ) : (
+                  <video src={v.src} className="w-full h-full object-cover" muted />
+                )}
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center">
+                  <div className={cn(
+                    "w-14 h-14 rounded-full border-2 border-white/80 flex items-center justify-center transition-all",
+                    active === v.id ? "bg-accent border-accent scale-110" : "bg-black/30 group-hover:scale-110"
+                  )}>
+                    <Play size={18} className="text-white ml-1" fill="white" />
+                  </div>
+                </div>
+                <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-0.5" style={{ fontFamily: "DM Mono, monospace" }}>
+                  {v.duration}
+                </div>
+                <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs px-2 py-0.5 uppercase tracking-wider">
+                  {v.category}
+                </div>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    removeVideo(v.id);
+                  }}
+                  className="absolute top-3 right-3 p-2 bg-black/70 text-white hover:bg-accent hover:text-accent-foreground transition-colors"
+                  aria-label="Excluir vídeo"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="p-5">
+                <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+                  {v.client} · {v.year}
+                </p>
+                <h3 className="font-medium text-base leading-snug mb-2 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                  {v.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                  {v.description}
+                </p>
+              </div>
+
+              {active === v.id && (
+                <div className="px-5 pb-5 pt-0">
+                  <div className="bg-secondary border border-border p-4 text-sm text-muted-foreground leading-relaxed space-y-3">
+                    <video src={v.src} controls className="w-full bg-black" />
+                    <p className="font-medium text-foreground mb-1">Sobre o projeto</p>
+                    <p>{v.description}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <p className="text-muted-foreground text-center py-20">Nenhum vídeo cadastrado nesta categoria.</p>
+        )}
+      </div>
+    </main>
+  );
+}
+
+// ── PRICING PAGE ───────────────────────────────────────────────────────────
+function PricingPage() {
+  return (
+    <main className="pt-16 min-h-screen">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
+        <div className="mb-14 max-w-xl">
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+            style={{ fontFamily: "DM Mono, monospace" }}
+          >
+            Investimento
+          </p>
+          <h1
+            className="text-5xl md:text-6xl mb-6"
+            style={{ fontFamily: "DM Serif Display, serif" }}
+          >
+            Planos e Preços
+          </h1>
+          <p className="text-muted-foreground leading-relaxed">
+            Projetos sob medida para cada necessidade. Todos os planos incluem briefing, produção e entrega editada. Para projetos personalizados, entre em contato.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 items-start">
+          {PLANS.map((plan) => (
+            <div
+              key={plan.name}
+              className={cn(
+                "flex flex-col border transition-all",
+                plan.highlight
+                  ? "border-accent bg-primary text-primary-foreground relative"
+                  : "border-border bg-card hover:border-accent/40"
+              )}
+            >
+              {plan.highlight && (
+                <div className="absolute -top-3 inset-x-0 flex justify-center">
+                  <span className="bg-accent text-accent-foreground text-xs px-3 py-0.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+                    Mais Escolhido
+                  </span>
+                </div>
+              )}
+
+              <div className="p-6 border-b border-border/30">
+                <div className="flex items-center gap-2 mb-4">
+                  <plan.icon size={16} className={plan.highlight ? "text-accent" : "text-accent"} />
+                  <p className="text-xs tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+                    {plan.name}
+                  </p>
+                </div>
+                <p
+                  className="text-4xl mb-0.5"
+                  style={{ fontFamily: "DM Serif Display, serif" }}
+                >
+                  {plan.price}
+                </p>
+                <p className={cn("text-xs", plan.highlight ? "opacity-60" : "text-muted-foreground")}>
+                  {plan.period}
+                </p>
+                <p className={cn("text-sm mt-4 leading-relaxed", plan.highlight ? "opacity-70" : "text-muted-foreground")}>
+                  {plan.description}
+                </p>
+              </div>
+
+              <div className="p-6 flex-1">
+                <ul className="space-y-3">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm">
+                      <Check
+                        size={14}
+                        className={cn("mt-0.5 shrink-0", plan.highlight ? "text-accent" : "text-accent")}
+                      />
+                      <span className={plan.highlight ? "opacity-85" : "text-muted-foreground"}>
+                        {f}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-6 pt-0">
+                <button
+                  className={cn(
+                    "w-full py-3 text-xs tracking-widest uppercase transition-all",
+                    plan.highlight
+                      ? "bg-accent text-accent-foreground hover:opacity-90"
+                      : "bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {plan.highlight ? plan.cta : plan.cta}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQ / info strip */}
+        <div className="mt-16 border-t border-border pt-12 grid md:grid-cols-3 gap-8">
+          {[
+            {
+              title: "Forma de pagamento",
+              text: "50% na assinatura do contrato e 50% na entrega. Parcelamento disponível via cartão de crédito em até 6x sem juros.",
+            },
+            {
+              title: "Deslocamentos",
+              text: "Projetos em Birigui e região já inclusos. Para outras cidades e estados, deslocamento sob consulta.",
+            },
+            {
+              title: "Pacotes personalizados",
+              text: "Nenhum projeto é igual. Posso montar um pacote específico para a sua demanda. Basta me enviar uma mensagem.",
+            },
+          ].map((item) => (
+            <div key={item.title}>
+              <h4 className="font-medium mb-2 text-sm tracking-wide">{item.title}</h4>
+              <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Contact block */}
+        <div className="mt-16 bg-card border border-border p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          <div>
+            <h2
+              className="text-3xl md:text-4xl mb-3"
+              style={{ fontFamily: "DM Serif Display, serif" }}
+            >
+              Tem um projeto em mente?
+            </h2>
+            <p className="text-muted-foreground max-w-sm">
+              Entre em contato para conversarmos sobre a sua ideia. Respondo em até 24h.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 shrink-0">
+            <a
+              href="mailto:smarquesmedia@gmail.com"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
+            >
+              smarquesmedia@gmail.com <ArrowUpRight size={14} />
+            </a>
+            <p className="text-xs text-muted-foreground text-center" style={{ fontFamily: "DM Mono, monospace" }}>
+              +55 18 99618-8589
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ── Footer ─────────────────────────────────────────────────────────────────
+function Footer({ onNav }: { onNav: (p: Page) => void }) {
+  return (
+    <footer className="border-t border-border bg-card">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 py-10 grid sm:grid-cols-3 gap-8">
+        <div>
+          <p className="text-lg mb-2" style={{ fontFamily: "DM Serif Display, serif" }}>
+            Sara Marques
+          </p>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Videomaker, fotógrafa mobile e gestora de tráfego pago baseada em Birigui, SP.
+          </p>
+        </div>
+        <div>
+          <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            Navegação
+          </p>
+          <ul className="space-y-2">
+            {(["home", "photos", "videos", "pricing"] as Page[]).map((p) => (
+              <li key={p}>
+                <button
+                  onClick={() => onNav(p)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors capitalize"
+                >
+                  {p === "home" ? "Início" : p === "photos" ? "Fotos" : p === "videos" ? "Vídeos" : "Planos"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            Contato
+          </p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>smarquesmedia@gmail.com</li>
+            <li>+55 18 99618-8589</li>
+            <li>Birigui, SP</li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-border px-5 md:px-8 py-4 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>
+          © 2024 Sara Marques. Todos os direitos reservados.
+        </p>
+        <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
+          Birigui · SP
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+// ── APP ────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [page, setPage] = useState<Page>("home");
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setDark(prefersDark);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const navigate = (p: Page) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
+      <Navbar current={page} onNav={navigate} dark={dark} onToggleDark={() => setDark(!dark)} />
+
+      <div className="flex-1">
+        {page === "home" && <HomePage onNav={navigate} />}
+        {page === "photos" && <PhotosPage />}
+        {page === "videos" && <VideosPage />}
+        {page === "pricing" && <PricingPage />}
+      </div>
+
+      <Footer onNav={navigate} />
+    </div>
+  );
+}
