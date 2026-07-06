@@ -163,10 +163,11 @@ function Navbar({
 
   return (
     <nav className="fixed top-0 inset-x-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 min-h-16 py-3 md:py-0 flex items-center justify-between flex-wrap gap-y-3">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 min-h-16 py-3 md:py-0 grid grid-cols-[2.25rem_1fr_2.25rem] md:flex md:items-center md:justify-between gap-y-3">
+        <span className="md:hidden" />
         <button
           onClick={() => onNav("home")}
-          className="font-serif text-xl tracking-tight leading-none"
+          className="justify-self-center md:justify-self-auto font-serif text-xl tracking-tight leading-none text-center"
           style={{ fontFamily: "DM Serif Display, serif" }}
         >
           Sara Marques
@@ -175,14 +176,13 @@ function Navbar({
           </span>
         </button>
 
-        {/* Desktop links */}
-        <ul className="order-3 w-full flex items-center justify-center gap-5 overflow-x-auto border-t border-border pt-3 md:order-none md:w-auto md:border-0 md:pt-0 md:gap-8">
+        <ul className="col-span-3 row-start-2 w-full grid grid-cols-4 gap-1 border-t border-border pt-3 md:row-auto md:col-auto md:w-auto md:flex md:items-center md:justify-center md:border-0 md:pt-0 md:gap-8">
           {links.map((l) => (
             <li key={l.page}>
               <button
                 onClick={() => onNav(l.page)}
                 className={cn(
-                  "text-sm tracking-wide transition-colors relative pb-0.5",
+                  "w-full text-center text-[0.78rem] sm:text-sm tracking-wide transition-colors relative pb-1 md:w-auto md:pb-0.5",
                   current === l.page
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -197,10 +197,10 @@ function Navbar({
           ))}
         </ul>
 
-        <div className="flex items-center gap-3">
+        <div className="justify-self-end flex items-center gap-3">
           <button
             onClick={onToggleDark}
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
             aria-label="Alternar tema"
           >
             {dark ? <Sun size={17} /> : <Moon size={17} />}
@@ -223,18 +223,18 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <main className="pt-28 md:pt-16">
       {/* Hero */}
-      <section className="min-h-[calc(100vh-4rem)] flex items-center bg-background">
-        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-16 items-center px-8 md:px-16 lg:px-20 py-20 md:py-28">
+      <section className="flex items-center bg-background">
+        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-16 items-center px-5 sm:px-8 md:px-16 lg:px-20 py-12 sm:py-16 md:py-28">
           {/* Left — text */}
           <div>
             <p
-              className="text-xs tracking-[0.3em] uppercase text-accent mb-8"
+              className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Audiovisual · Birigui, SP
             </p>
             <h1
-              className="text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-8"
+              className="text-5xl sm:text-6xl lg:text-7xl leading-[1.02] mb-7 md:mb-8"
               style={{ fontFamily: "DM Serif Display, serif" }}
             >
               A imagem
@@ -246,20 +246,20 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => onNav("photos")}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
               >
                 Ver portfólio <ArrowUpRight size={15} />
               </button>
               <button
                 onClick={() => onNav("pricing")}
-                className="inline-flex items-center gap-2 px-6 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
               >
                 Contato
               </button>
             </div>
           </div>
 
-          <div className="relative bg-muted overflow-hidden min-h-[360px] md:min-h-[520px]">
+          <div className="relative bg-muted overflow-hidden min-h-[340px] sm:min-h-[430px] md:min-h-[520px]">
             <img
               src="/assets/home-cover.png"
               alt="Equipamentos de fotografia e edição sobre mesa"
