@@ -12,7 +12,7 @@ import {
 } from "../lib/gallery";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type Page = "home" | "photos" | "videos" | "pricing" | "login" | "admin";
+type Page = "home" | "photos" | "videos" | "contact" | "login" | "admin";
 
 const SERVICES = [
   {
@@ -39,7 +39,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname === "/admin") return "admin";
   if (pathname === "/fotos") return "photos";
   if (pathname === "/videos") return "videos";
-  if (pathname === "/contato" || pathname === "/planos") return "pricing";
+  if (pathname === "/contato" || pathname === "/planos") return "contact";
   return "home";
 }
 
@@ -48,7 +48,7 @@ function pathFromPage(page: Page) {
     home: "/",
     photos: "/fotos",
     videos: "/videos",
-    pricing: "/contato",
+    contact: "/contato",
     login: "/login",
     admin: "/admin",
   };
@@ -158,7 +158,7 @@ function Navbar({
     { label: "Início", page: "home" },
     { label: "Fotos", page: "photos" },
     { label: "Vídeos", page: "videos" },
-    { label: "Contato", page: "pricing" },
+    { label: "Contato", page: "contact" },
   ];
 
   return (
@@ -170,7 +170,7 @@ function Navbar({
           className="justify-self-center md:justify-self-auto font-serif text-xl tracking-tight leading-none text-center"
           style={{ fontFamily: "DM Serif Display, serif" }}
         >
-          Sara Marques
+          SARA MARQUES
           <span className="text-accent ml-1.5 text-sm" style={{ fontFamily: "DM Mono, monospace" }}>
             ✦
           </span>
@@ -208,7 +208,7 @@ function Navbar({
 
           <button
             className="hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            onClick={() => onNav("pricing")}
+            onClick={() => onNav("contact")}
           >
             Contato
           </button>
@@ -251,7 +251,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
                 Ver portfólio <ArrowUpRight size={15} />
               </button>
               <button
-                onClick={() => onNav("pricing")}
+                onClick={() => onNav("contact")}
                 className="inline-flex items-center justify-center gap-2 px-5 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
               >
                 Contato
@@ -336,7 +336,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           Seu próximo projeto começa aqui.
         </h2>
         <button
-          onClick={() => onNav("pricing")}
+          onClick={() => onNav("contact")}
           className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
         >
           Falar no WhatsApp <ArrowUpRight size={16} />
@@ -576,8 +576,8 @@ function VideosPage() {
   );
 }
 
-// ── PRICING PAGE ───────────────────────────────────────────────────────────
-function PricingPage() {
+// ── CONTACT PAGE ───────────────────────────────────────────────────────────
+function ContactPage() {
   const whatsappUrl = "https://wa.me/5518996188589?text=Ol%C3%A1%2C%20Sara%21%20Vim%20pelo%20seu%20portf%C3%B3lio%20e%20quero%20falar%20sobre%20um%20projeto.";
 
   return (
@@ -682,7 +682,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
             Navegação
           </p>
           <ul className="space-y-2">
-            {(["home", "photos", "videos", "pricing"] as Page[]).map((p) => (
+            {(["home", "photos", "videos", "contact"] as Page[]).map((p) => (
               <li key={p}>
                 <button
                   onClick={() => onNav(p)}
@@ -759,7 +759,7 @@ export default function App() {
         {page === "home" && <HomePage onNav={navigate} />}
         {page === "photos" && <PhotosPage />}
         {page === "videos" && <VideosPage />}
-        {page === "pricing" && <PricingPage />}
+        {page === "contact" && <ContactPage />}
         {page === "login" && <Login />}
         {page === "admin" && (
           <ProtectedRoute>
