@@ -224,49 +224,48 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
     <main className="pt-28 md:pt-16">
       {/* Hero */}
       <section className="min-h-[calc(100vh-4rem)] flex items-center bg-background">
-        {/* Left — text */}
-        <div className="w-full max-w-6xl mx-auto flex flex-col justify-center px-8 md:px-16 lg:px-20 py-20 md:py-28">
-          <p
-            className="text-xs tracking-[0.3em] uppercase text-accent mb-8"
-            style={{ fontFamily: "DM Mono, monospace" }}
-          >
-            Audiovisual · Birigui, SP
-          </p>
-          <h1
-            className="text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-8"
-            style={{ fontFamily: "DM Serif Display, serif" }}
-          >
-            A imagem
-            <br />
-            como
-            <br />
-            <em className="not-italic text-accent">linguagem.</em>
-          </h1>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => onNav("photos")}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
+        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-16 items-center px-8 md:px-16 lg:px-20 py-20 md:py-28">
+          {/* Left — text */}
+          <div>
+            <p
+              className="text-xs tracking-[0.3em] uppercase text-accent mb-8"
+              style={{ fontFamily: "DM Mono, monospace" }}
             >
-              Ver portfólio <ArrowUpRight size={15} />
-            </button>
-            <button
-              onClick={() => onNav("pricing")}
-              className="inline-flex items-center gap-2 px-6 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
+              Audiovisual · Birigui, SP
+            </p>
+            <h1
+              className="text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-8"
+              style={{ fontFamily: "DM Serif Display, serif" }}
             >
-              Contato
-            </button>
+              A imagem
+              <br />
+              como
+              <br />
+              <em className="not-italic text-accent">linguagem.</em>
+            </h1>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => onNav("photos")}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all"
+              >
+                Ver portfólio <ArrowUpRight size={15} />
+              </button>
+              <button
+                onClick={() => onNav("pricing")}
+                className="inline-flex items-center gap-2 px-6 py-3 border border-border text-sm tracking-wide hover:border-foreground transition-all"
+              >
+                Contato
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* Cover */}
-      <section className="border-t border-border bg-card px-5 md:px-8 py-8 md:py-12">
-        <div className="max-w-6xl mx-auto overflow-hidden bg-muted">
-          <img
-            src="/assets/home-cover.png"
-            alt="Equipamentos de fotografia e edição sobre mesa"
-            className="w-full h-[320px] md:h-[520px] object-cover"
-          />
+          <div className="relative bg-muted overflow-hidden min-h-[360px] md:min-h-[520px]">
+            <img
+              src="/assets/home-cover.png"
+              alt="Equipamentos de fotografia e edição sobre mesa"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </div>
         </div>
       </section>
 
