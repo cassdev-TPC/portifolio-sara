@@ -279,7 +279,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         <div className="reveal-on-scroll relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <div className="max-w-3xl">
             <p
-              className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
+              className="text-xs font-semibold tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Audiovisual ·
@@ -319,7 +319,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="reveal-on-scroll relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
         <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start md:items-center">
           <div className="md:col-span-2">
-            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
               Sobre mim
             </p>
             <img
@@ -347,7 +347,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="reveal-on-scroll relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-12">
-            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Serviços
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
@@ -371,7 +371,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="reveal-on-scroll relative py-20 md:py-24 px-8 md:px-16 lg:px-20 border-t border-border bg-card/60 overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-10">
-            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Processo
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
@@ -394,7 +394,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* CTA strip */}
       <section className="reveal-on-scroll relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
-        <p className="relative text-xs tracking-[0.3em] uppercase opacity-80 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+        <p className="relative text-xs font-semibold tracking-[0.3em] uppercase opacity-85 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
           Vamos trabalhar juntos
         </p>
         <h2
@@ -443,7 +443,7 @@ function PhotosPage() {
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="reveal-on-scroll mb-10">
           <p
-            className="section-kicker text-xs tracking-[0.3em] uppercase mb-3"
+            className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-3"
             style={{ fontFamily: "DM Mono, monospace" }}
           >
             Galeria
@@ -555,7 +555,7 @@ function VideosPage() {
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="reveal-on-scroll mb-10">
           <p
-            className="section-kicker text-xs tracking-[0.3em] uppercase mb-3"
+            className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-3"
             style={{ fontFamily: "DM Mono, monospace" }}
           >
             Produções
@@ -658,7 +658,7 @@ function ContactPage() {
         <div className="reveal-on-scroll grid w-full lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
           <div className="text-center lg:text-left">
             <p
-              className="section-kicker text-xs tracking-[0.3em] uppercase mb-3 mx-auto lg:mx-0"
+              className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-3"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Contato
@@ -684,14 +684,15 @@ function ContactPage() {
           </div>
 
           <div className="reveal-on-scroll bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[0_18px_50px_rgba(170,125,206,0.12)]" style={{ "--reveal-delay": "110ms" } as Record<string, string>}>
-            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-semibold tracking-[0.3em] uppercase text-accent mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
               Informações
             </p>
             <div className="space-y-6">
               {[
                 { label: "WhatsApp", value: "+55 18 99618-8589", href: whatsappUrl },
                 { label: "E-mail", value: "smarquesmedia@gmail.com", href: "mailto:smarquesmedia@gmail.com" },
-                { label: "Cidade", value: "Birigui, SP" },
+                { label: "Instagram", value: "@smarques.media", href: "https://instagram.com/smarques.media" },
+                { label: "Instagram pessoal", value: "@eusahmarques", href: "https://instagram.com/eusahmarques" },
                 { label: "Nome", value: "Sara Marques" },
               ].map((item) => (
                 <div key={item.label} className="border-b border-border pb-4 last:border-0 last:pb-0">

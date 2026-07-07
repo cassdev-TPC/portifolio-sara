@@ -191,26 +191,6 @@
     box-shadow: 0 16px 34px rgba(170, 125, 206, 0.24);
   }
 
-  .section-kicker {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    border: 1px solid rgba(170, 125, 206, 0.38);
-    border-radius: 999px;
-    background: rgba(170, 125, 206, 0.14);
-    color: var(--primary);
-    padding: 0.45rem 0.75rem;
-    font-weight: 800;
-    text-shadow: 0 10px 26px rgba(170, 125, 206, 0.28);
-  }
-
-  .section-kicker-on-primary {
-    border-color: rgba(255, 255, 255, 0.34);
-    background: rgba(255, 255, 255, 0.14);
-    color: #ffffff;
-    text-shadow: 0 10px 26px rgba(18, 9, 26, 0.24);
-  }
-
   .page-enter {
     animation: pageEnter 680ms ease-out both;
   }
