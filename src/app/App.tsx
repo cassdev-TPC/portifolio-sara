@@ -234,7 +234,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <main className="pt-28 md:pt-16">
       {/* Hero */}
-      <section className="relative flex min-h-[720px] items-center overflow-hidden bg-black text-white">
+      <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
         <img
           src="/assets/home-cover-sara-banner.png"
           alt="Sara Marques trabalhando em frente ao computador"
