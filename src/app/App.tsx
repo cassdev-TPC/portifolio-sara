@@ -237,11 +237,11 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               className="text-5xl sm:text-6xl lg:text-7xl leading-[1.02] mb-7 md:mb-8"
               style={{ fontFamily: "DM Serif Display, serif" }}
             >
-              A imagem
+              A imagem{" "}
               <br />
-              como
+              como ferramenta{" "}
               <br />
-              <em className="not-italic text-accent">linguagem.</em>
+              <em className="not-italic text-accent">de venda.</em>
             </h1>
             <div className="flex flex-wrap gap-3">
               <button
@@ -461,7 +461,7 @@ function PhotosPage() {
 // ── VIDEOS PAGE ────────────────────────────────────────────────────────────
 function VideosPage() {
   const [videos, setVideos] = useState<GalleryItem[]>([]);
-  const [filter, setFilter] = useState("Todos");
+  const [filter, setFilter] = useState(DEFAULT_VIDEO_CATEGORIES[0]);
   const [active, setActive] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -475,10 +475,7 @@ function VideosPage() {
 
   const categories = useMemo(() => getCategories(videos, DEFAULT_VIDEO_CATEGORIES), [videos]);
 
-  const filtered =
-    filter === "Todos"
-      ? videos
-      : videos.filter((v) => v.category === filter);
+  const filtered = videos.filter((v) => v.category === filter);
 
   return (
     <main className="pt-28 md:pt-16 min-h-screen">

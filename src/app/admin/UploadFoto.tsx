@@ -9,7 +9,7 @@ type UploadFotoProps = {
 
 export default function UploadFoto({ onUploaded }: UploadFotoProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [category, setCategory] = useState(DEFAULT_PHOTO_CATEGORIES[1] ?? "Produtos");
+  const [category, setCategory] = useState(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +30,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
       setError("");
       setMessage("Foto adicionada com sucesso.");
       setFile(null);
-      setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Produtos");
+      setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
       event.currentTarget.reset();
       onUploaded();
     } catch {

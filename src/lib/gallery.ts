@@ -12,8 +12,15 @@ export type GalleryItem = {
   createdAt?: string;
 };
 
-export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Produtos", "Eventos", "Retratos", "Bastidores"];
-export const DEFAULT_VIDEO_CATEGORIES = ["Todos", "Storytelling", "Tráfego Pago", "Eventos", "Produtos"];
+export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Eventos"];
+export const DEFAULT_VIDEO_CATEGORIES = [
+  "Serviços e Produtos",
+  "Imobiliário",
+  "Eventos Musicais e Shows",
+  "Moda e Varejo",
+  "Eventos Sociais",
+  "Gastronomia",
+];
 
 function cleanCategory(category: string) {
   return category.trim() || "Sem categoria";
@@ -43,12 +50,60 @@ function categoryFromSlug(slug: string) {
     .join(" ") || "Sem categoria";
 }
 
-export function getCategories(items: { category: string }[], defaults: string[]) {
-  const unique = new Set(defaults);
-  items.forEach((item) => {
-    if (item.category.trim()) unique.add(item.category.trim());
-  });
-  return Array.from(unique);
+function categoryKey(category: string) {
+  return category
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function normalizeGalleryCategory(kind: GalleryKind, category: string) {
+  const key = categoryKey(category);
+
+  if (kind === "photos") {
+    const aliases: Record<string, string> = {
+      produto: "Retrato",
+      produtos: "Retrato",
+      retrato: "Retrato",
+      retratos: "Retrato",
+      ensaio: "Ensaios",
+      ensaios: "Ensaios",
+      bastidor: "Ensaios",
+      bastidores: "Ensaios",
+      evento: "Eventos",
+      eventos: "Eventos",
+    };
+
+    return aliases[key] ?? "Ensaios";
+  }
+
+  const aliases: Record<string, string> = {
+    storytelling: "Serviços e Produtos",
+    "trafego pago": "Serviços e Produtos",
+    produto: "Serviços e Produtos",
+    produtos: "Serviços e Produtos",
+    servico: "Serviços e Produtos",
+    servicos: "Serviços e Produtos",
+    "servicos e produtos": "Serviços e Produtos",
+    imobiliario: "Imobiliário",
+    evento: "Eventos Sociais",
+    eventos: "Eventos Sociais",
+    "eventos musicais e shows": "Eventos Musicais e Shows",
+    show: "Eventos Musicais e Shows",
+    shows: "Eventos Musicais e Shows",
+    moda: "Moda e Varejo",
+    varejo: "Moda e Varejo",
+    "moda e varejo": "Moda e Varejo",
+    "eventos sociais": "Eventos Sociais",
+    gastronomia: "Gastronomia",
+  };
+
+  return aliases[key] ?? "Serviços e Produtos";
+}
+
+export function getCategories(_items: { category: string }[], defaults: string[]) {
+  return defaults;
 }
 
 export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
@@ -64,7 +119,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
   const visibleFolders = (folders ?? []).filter((folder) => !folder.name.includes("."));
   const items = await Promise.all(
     visibleFolders.map(async (folder) => {
-      const category = categoryFromSlug(folder.name);
+      const category = normalizeGalleryCategory(kind, categoryFromSlug(folder.name));
       const prefix = `${kind}/${folder.name}`;
       const { data: files, error } = await supabase.storage.from(GALLERY_BUCKET).list(prefix, {
         limit: 100,

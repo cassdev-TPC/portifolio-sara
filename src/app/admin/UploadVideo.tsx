@@ -9,7 +9,7 @@ type UploadVideoProps = {
 
 export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [category, setCategory] = useState(DEFAULT_VIDEO_CATEGORIES[1] ?? "Storytelling");
+  const [category, setCategory] = useState(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +30,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
       setError("");
       setMessage("Vídeo adicionado com sucesso.");
       setFile(null);
-      setCategory(DEFAULT_VIDEO_CATEGORIES[1] ?? "Storytelling");
+      setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
       event.currentTarget.reset();
       onUploaded();
     } catch {
