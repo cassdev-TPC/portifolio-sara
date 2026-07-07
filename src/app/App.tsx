@@ -27,6 +27,10 @@ const SERVICES = [
     title: "Videomaker",
     desc: "Produzo vídeos com uma linguagem criativa e estratégica, adaptando cada projeto ao seu objetivo. Seja para anúncios, redes sociais, eventos ou conteúdos institucionais, desenvolvo vídeos que comunicam com clareza, geram conexão e valorizam a sua marca ou o seu momento.",
   },
+  {
+    title: "Fotografia",
+    desc: "Registro pessoas, momentos, eventos e marcas com um olhar criativo e atento aos detalhes, criando imagens que transmitem emoção, autenticidade e contam histórias.",
+  },
 ];
 
 const PROCESS_STEPS = [
@@ -300,7 +304,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => onNav("photos")}
-                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#b35cff] text-white text-sm font-semibold tracking-wide shadow-[0_18px_45px_rgba(179,92,255,0.38)] hover:bg-[#c77dff] hover:text-white"
+                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#c77dff] bg-[#8f3dff] text-sm font-semibold tracking-wide text-white shadow-[0_18px_45px_rgba(143,61,255,0.42)] hover:bg-[#c77dff] hover:border-[#c77dff] hover:text-white"
               >
                 Ver portfólio <ArrowUpRight size={15} />
               </button>
@@ -354,7 +358,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               O que eu faço
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-px bg-border rounded-2xl overflow-hidden">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-px bg-border rounded-2xl overflow-hidden">
             {SERVICES.map((s, index) => (
               <div key={s.title} className="reveal-on-scroll bg-background p-8 hover:bg-card transition-all duration-300 group hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(170,125,206,0.16)]" style={{ "--reveal-delay": `${index * 90}ms` } as Record<string, string>}>
                 <h3 className="text-lg font-medium mb-3 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
