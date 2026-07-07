@@ -279,7 +279,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         <div className="reveal-on-scroll relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <div className="max-w-3xl">
             <p
-              className="section-kicker text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase mb-6 md:mb-8"
+              className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Audiovisual ·
@@ -319,7 +319,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="reveal-on-scroll relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
         <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start md:items-center">
           <div className="md:col-span-2">
-            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
               Sobre mim
             </p>
             <img
@@ -347,7 +347,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="reveal-on-scroll relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-12">
-            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Serviços
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
@@ -394,7 +394,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* CTA strip */}
       <section className="reveal-on-scroll relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
-        <p className="section-kicker section-kicker-on-primary relative text-xs tracking-[0.3em] uppercase mb-4 mx-auto" style={{ fontFamily: "DM Mono, monospace" }}>
+        <p className="relative text-xs tracking-[0.3em] uppercase opacity-80 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
           Vamos trabalhar juntos
         </p>
         <h2
@@ -405,7 +405,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         </h2>
         <button
           onClick={() => onNav("contact")}
-          className="btn-modern relative inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground text-sm tracking-widest uppercase hover:bg-background hover:text-foreground"
+          className="btn-modern relative inline-flex items-center gap-2 px-8 py-4 bg-[#12091a] text-white text-sm tracking-widest uppercase shadow-[0_18px_44px_rgba(18,9,26,0.35)] hover:bg-[#2a0f3d] hover:text-white"
         >
           Pagina de Contato <ArrowUpRight size={16} />
         </button>
