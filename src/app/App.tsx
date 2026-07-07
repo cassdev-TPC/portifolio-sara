@@ -49,6 +49,33 @@ function cn(...classes: (string | undefined | false | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+function useScrollReveal(deps: unknown[] = []) {
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const elements = Array.from(document.querySelectorAll<HTMLElement>(".reveal-on-scroll"));
+
+    if (reducedMotion) {
+      elements.forEach((element) => element.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.16, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, deps);
+}
+
 function pageFromPath(pathname: string): Page {
   if (pathname === "/login" || pathname === "/admin/login") return "login";
   if (pathname === "/admin") return "admin";
@@ -235,8 +262,10 @@ function Navbar({
 
 // Home page
 function HomePage({ onNav }: { onNav: (p: Page) => void }) {
+  useScrollReveal([]);
+
   return (
-    <main className="pt-28 md:pt-16">
+    <main className="page-enter pt-28 md:pt-16">
       {/* Hero */}
       <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
         <img
@@ -247,10 +276,10 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
         <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
 
-        <div className="relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
+        <div className="reveal-on-scroll relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <div className="max-w-3xl">
             <p
-              className="text-xs font-bold tracking-[0.24em] sm:tracking-[0.3em] uppercase text-primary mb-6 md:mb-8 drop-shadow-[0_8px_24px_rgba(170,125,206,0.45)]"
+              className="section-kicker text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Audiovisual ·
@@ -277,7 +306,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               </button>
               <button
                 onClick={() => onNav("contact")}
-                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#d8a6ff] bg-[#b35cff]/20 text-sm font-semibold tracking-wide text-white shadow-[0_14px_34px_rgba(179,92,255,0.25)] hover:bg-[#b35cff] hover:border-[#b35cff] hover:text-white"
+                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#c77dff] bg-[#8f3dff] text-sm font-semibold tracking-wide text-white shadow-[0_18px_45px_rgba(143,61,255,0.42)] hover:bg-[#c77dff] hover:border-[#c77dff] hover:text-white"
               >
                 Contato
               </button>
@@ -287,10 +316,10 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       </section>
 
       {/* About */}
-      <section className="relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
+      <section className="reveal-on-scroll relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
         <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start md:items-center">
           <div className="md:col-span-2">
-            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
               Sobre mim
             </p>
             <img
@@ -302,26 +331,23 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           </div>
           <div className="md:col-span-3 flex flex-col justify-center">
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Olá! Eu sou a Sara Marques, tenho 19 anos e sou apaixonada por transformar ideias em resultados reais. Sou cristã, e é o que guia minha ética e dedicação em tudo o que faço.
+              Olá! Eu sou a Sara Marques, tenho 19 anos e sou apaixonada por comunicação, criatividade e pelo poder de contar histórias através do audiovisual.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Atualmente, curso Publicidade e Propaganda no Unisalesiano de Araçatuba, mergulhando diariamente no universo da comunicação estratégica.
-            </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              Minha rotina é dividida entre a precisão dos dados e a sensibilidade da lente: atuo como Gestora de Tráfego Pago em uma agência de publicidade em Birigui e, simultaneamente, dou vida a marcas através do audiovisual como Videomaker e Fotógrafa Mobile.
+              Sou estudante de Publicidade e Propaganda e atuo como Gestora de Tráfego Pago, Videomaker e Fotógrafa, unindo estratégia e criatividade para desenvolver conteúdos que conectam pessoas, fortalecem marcas e registram momentos de forma autêntica.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Unir a faculdade com a prática de agência me permite entregar um trabalho que não é apenas "bonito", mas focado em conversão.
+              Acredito que cada projeto é único e, por isso, busco sempre entregar um trabalho com qualidade, dedicação e atenção aos detalhes.
             </p>
           </div>
         </div>
       </section>
 
       {/* Services */}
-      <section className="relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
+      <section className="reveal-on-scroll relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-12">
-            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Serviços
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
@@ -329,8 +355,8 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-px bg-border rounded-2xl overflow-hidden">
-            {SERVICES.map((s) => (
-              <div key={s.title} className="bg-background p-8 hover:bg-card transition-all duration-300 group hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(170,125,206,0.16)]">
+            {SERVICES.map((s, index) => (
+              <div key={s.title} className="reveal-on-scroll bg-background p-8 hover:bg-card transition-all duration-300 group hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(170,125,206,0.16)]" style={{ "--reveal-delay": `${index * 90}ms` } as Record<string, string>}>
                 <h3 className="text-lg font-medium mb-3 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
                   {s.title}
                 </h3>
@@ -342,10 +368,10 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       </section>
 
       {/* Process */}
-      <section className="relative py-20 md:py-24 px-8 md:px-16 lg:px-20 border-t border-border bg-card/60 overflow-hidden">
+      <section className="reveal-on-scroll relative py-20 md:py-24 px-8 md:px-16 lg:px-20 border-t border-border bg-card/60 overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-10">
-            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Processo
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
@@ -354,7 +380,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {PROCESS_STEPS.map((item, index) => (
-              <div key={item.title} className="relative border border-border bg-background rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]">
+              <div key={item.title} className="reveal-on-scroll relative border border-border bg-background rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]" style={{ "--reveal-delay": `${index * 90}ms` } as Record<string, string>}>
                 <span className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/12 text-sm font-semibold text-primary">
                   {String(index + 1).padStart(2, "0")}
                 </span>
@@ -367,8 +393,8 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       </section>
 
       {/* CTA strip */}
-      <section className="relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
-        <p className="relative text-xs font-bold tracking-[0.3em] uppercase opacity-95 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+      <section className="reveal-on-scroll relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
+        <p className="section-kicker section-kicker-on-primary relative text-xs tracking-[0.3em] uppercase mb-4 mx-auto" style={{ fontFamily: "DM Mono, monospace" }}>
           Vamos trabalhar juntos
         </p>
         <h2
@@ -410,12 +436,14 @@ function PhotosPage() {
       ? photos
       : photos.filter((p) => p.category === filter);
 
+  useScrollReveal([loading, filter, filtered.length]);
+
   return (
-    <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
+    <main className="page-enter relative pt-28 md:pt-16 min-h-screen overflow-hidden">
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
-        <div className="mb-10">
+        <div className="reveal-on-scroll mb-10">
           <p
-            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+            className="section-kicker text-xs tracking-[0.3em] uppercase mb-3"
             style={{ fontFamily: "DM Mono, monospace" }}
           >
             Galeria
@@ -435,7 +463,7 @@ function PhotosPage() {
         {error && <p className="text-accent mb-8">{error}</p>}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
+        <div className="reveal-on-scroll flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -457,7 +485,8 @@ function PhotosPage() {
           {filtered.map((photo, i) => (
             <div
               key={photo.id}
-              className="break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="reveal-on-scroll break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              style={{ "--reveal-delay": `${Math.min(i, 8) * 45}ms` } as Record<string, string>}
               onClick={() => setLightbox(photos.indexOf(photo))}
             >
               <img
@@ -519,12 +548,14 @@ function VideosPage() {
 
   const filtered = videos.filter((v) => v.category === filter);
 
+  useScrollReveal([loading, filter, filtered.length]);
+
   return (
-    <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
+    <main className="page-enter relative pt-28 md:pt-16 min-h-screen overflow-hidden">
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
-        <div className="mb-10">
+        <div className="reveal-on-scroll mb-10">
           <p
-            className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+            className="section-kicker text-xs tracking-[0.3em] uppercase mb-3"
             style={{ fontFamily: "DM Mono, monospace" }}
           >
             Produções
@@ -544,7 +575,7 @@ function VideosPage() {
         {error && <p className="text-accent mb-8">{error}</p>}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
+        <div className="reveal-on-scroll flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -563,10 +594,11 @@ function VideosPage() {
 
         {/* Video grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filtered.map((v) => (
+          {filtered.map((v, index) => (
             <div
               key={v.id}
-              className="group cursor-pointer bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="reveal-on-scroll group cursor-pointer bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              style={{ "--reveal-delay": `${Math.min(index, 8) * 55}ms` } as Record<string, string>}
               onClick={() => setActive(v.id === active ? null : v.id)}
             >
               <div className="relative aspect-video bg-muted overflow-hidden">
@@ -618,14 +650,15 @@ function VideosPage() {
 // Contact page
 function ContactPage() {
   const whatsappUrl = "https://wa.me/5518996188589?text=Ol%C3%A1%2C%20Sara%21%20Vim%20pelo%20seu%20portf%C3%B3lio%20e%20quero%20falar%20sobre%20um%20projeto.";
+  useScrollReveal([]);
 
   return (
-    <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
-      <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
-        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-start">
-          <div>
+    <main className="page-enter relative pt-28 md:pt-16 min-h-screen overflow-hidden">
+      <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20 min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] flex items-center">
+        <div className="reveal-on-scroll grid w-full lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
+          <div className="text-center lg:text-left">
             <p
-              className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
+              className="section-kicker text-xs tracking-[0.3em] uppercase mb-3 mx-auto lg:mx-0"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Contato
@@ -636,7 +669,7 @@ function ContactPage() {
             >
               Vamos conversar sobre o seu projeto?
             </h1>
-            <p className="text-muted-foreground leading-relaxed max-w-xl mb-8">
+            <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0 mb-8">
               Para orçamentos, parcerias ou dúvidas sobre os serviços, fale diretamente comigo pelo WhatsApp.
             </p>
 
@@ -650,8 +683,8 @@ function ContactPage() {
             </a>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[0_18px_50px_rgba(170,125,206,0.12)]">
-            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
+          <div className="reveal-on-scroll bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[0_18px_50px_rgba(170,125,206,0.12)]" style={{ "--reveal-delay": "110ms" } as Record<string, string>}>
+            <p className="section-kicker text-xs tracking-[0.3em] uppercase mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
               Informações
             </p>
             <div className="space-y-6">

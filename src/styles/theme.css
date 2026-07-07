@@ -191,4 +191,67 @@
     box-shadow: 0 16px 34px rgba(170, 125, 206, 0.24);
   }
 
+  .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border: 1px solid rgba(170, 125, 206, 0.38);
+    border-radius: 999px;
+    background: rgba(170, 125, 206, 0.14);
+    color: var(--primary);
+    padding: 0.45rem 0.75rem;
+    font-weight: 800;
+    text-shadow: 0 10px 26px rgba(170, 125, 206, 0.28);
+  }
+
+  .section-kicker-on-primary {
+    border-color: rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    text-shadow: 0 10px 26px rgba(18, 9, 26, 0.24);
+  }
+
+  .page-enter {
+    animation: pageEnter 680ms ease-out both;
+  }
+
+  .reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 680ms ease,
+      transform 680ms ease,
+      border-color 300ms ease,
+      box-shadow 300ms ease,
+      background-color 300ms ease;
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @keyframes pageEnter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter,
+    .reveal-on-scroll {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
 }
