@@ -16,27 +16,31 @@ type Page = "home" | "photos" | "videos" | "contact" | "login" | "admin";
 
 const SERVICES = [
   {
-    title: "Videografia",
-    desc: "Criação de vídeos dinâmicos e autênticos focados em identidade, desde o roteiro à edição final, com estratégias de storytelling feitas para reter a atenção e despertar o desejo de compra.",
+    title: "Gestão de Tráfego Pago",
+    desc: "Criação, gerenciamento e otimização de campanhas no Meta Ads, utilizando estratégias para ampliar o alcance, atrair o público certo e potencializar os resultados da sua presença digital.",
   },
   {
-    title: "Fotografia",
-    desc: "Captura de imagens de alta qualidade com um olhar direcionado para o posicionamento da sua marca, cobrindo produtos, festas e eventos com edição profissional e foco na sua identidade visual.",
+    title: "Storymaker Realtime",
+    desc: "Cobertura em tempo real através de stories, registrando cada momento de forma espontânea e estratégica. Ideal para eventos e festas. Registro pessoas, momentos, eventos e marcas com um olhar criativo e atento aos detalhes, criando imagens que transmitem emoção, autenticidade e contam histórias.",
+  },
+  {
+    title: "Videomaker",
+    desc: "Produzo vídeos com uma linguagem criativa e estratégica, adaptando cada projeto ao seu objetivo. Seja para anúncios, redes sociais, eventos ou conteúdos institucionais, desenvolvo vídeos que comunicam com clareza, geram conexão e valorizam a sua marca ou o seu momento.",
   },
 ];
 
-const CONTACT_TOPICS = [
+const PROCESS_STEPS = [
   {
     title: "Conte sua ideia",
-    text: "Envie uma mensagem explicando o que você precisa e qual resultado deseja alcançar.",
+    text: "Explique o que você precisa e qual resultado deseja alcançar.",
   },
   {
-    title: "Orçamentos personalizados",
-    text: "Cada projeto é analisado conforme objetivo, local, duração da gravação e tipo de entrega.",
+    title: "Receba um orçamento personalizado",
+    text: "Cada projeto é planejado de acordo com o objetivo, local, tempo de produção e formato de entrega.",
   },
   {
-    title: "Briefing do projeto",
-    text: "Antes da produção, entendemos sua marca, seu público e o objetivo principal do conteúdo.",
+    title: "Planejamento e produção",
+    text: "Após alinharmos o briefing, iniciaremos a criação do conteúdo para gerar resultados para sua marca.",
   },
 ];
 
@@ -246,7 +250,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         <div className="relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <div className="max-w-3xl">
             <p
-              className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
+              className="text-xs font-bold tracking-[0.24em] sm:tracking-[0.3em] uppercase text-primary mb-6 md:mb-8 drop-shadow-[0_8px_24px_rgba(170,125,206,0.45)]"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
               Audiovisual ·
@@ -267,13 +271,13 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => onNav("photos")}
-                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground"
+                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#b35cff] text-white text-sm font-semibold tracking-wide shadow-[0_18px_45px_rgba(179,92,255,0.38)] hover:bg-[#c77dff] hover:text-white"
               >
                 Ver portfólio <ArrowUpRight size={15} />
               </button>
               <button
                 onClick={() => onNav("contact")}
-                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-white/50 text-sm tracking-wide text-white hover:border-accent hover:text-accent"
+                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#d8a6ff] bg-[#b35cff]/20 text-sm font-semibold tracking-wide text-white shadow-[0_14px_34px_rgba(179,92,255,0.25)] hover:bg-[#b35cff] hover:border-[#b35cff] hover:text-white"
               >
                 Contato
               </button>
@@ -286,7 +290,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
         <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start md:items-center">
           <div className="md:col-span-2">
-            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
               Sobre mim
             </p>
             <img
@@ -317,14 +321,14 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       <section className="relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-12">
-            <p className="text-xs tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
               Serviços
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
               O que eu faço
             </h2>
           </div>
-          <div className="grid sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden">
+          <div className="grid md:grid-cols-3 gap-px bg-border rounded-2xl overflow-hidden">
             {SERVICES.map((s) => (
               <div key={s.title} className="bg-background p-8 hover:bg-card transition-all duration-300 group hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(170,125,206,0.16)]">
                 <h3 className="text-lg font-medium mb-3 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -337,9 +341,34 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         </div>
       </section>
 
+      {/* Process */}
+      <section className="relative py-20 md:py-24 px-8 md:px-16 lg:px-20 border-t border-border bg-card/60 overflow-hidden">
+        <div className="relative max-w-5xl mx-auto">
+          <div className="mb-10">
+            <p className="text-xs font-bold tracking-[0.3em] uppercase text-primary mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
+              Processo
+            </p>
+            <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
+              Meu processo de trabalho
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {PROCESS_STEPS.map((item, index) => (
+              <div key={item.title} className="relative border border-border bg-background rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]">
+                <span className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/12 text-sm font-semibold text-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3 className="font-semibold mb-2 text-base tracking-wide">{item.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA strip */}
       <section className="relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
-        <p className="relative text-xs tracking-[0.3em] uppercase opacity-70 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
+        <p className="relative text-xs font-bold tracking-[0.3em] uppercase opacity-95 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
           Vamos trabalhar juntos
         </p>
         <h2
@@ -608,7 +637,7 @@ function ContactPage() {
               Vamos conversar sobre o seu projeto?
             </h1>
             <p className="text-muted-foreground leading-relaxed max-w-xl mb-8">
-              Para orçamentos, parcerias ou dúvidas sobre audiovisual, fotografia mobile e tráfego pago, fale diretamente com a Sara pelo WhatsApp.
+              Para orçamentos, parcerias ou dúvidas sobre os serviços, fale diretamente comigo pelo WhatsApp.
             </p>
 
             <a
@@ -647,15 +676,6 @@ function ContactPage() {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="mt-16 border-t border-border pt-12 grid md:grid-cols-3 gap-8">
-          {CONTACT_TOPICS.map((item) => (
-            <div key={item.title} className="relative border border-border bg-card/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]">
-              <h4 className="font-medium mb-2 text-sm tracking-wide">{item.title}</h4>
-              <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
-            </div>
-          ))}
         </div>
       </div>
     </main>
