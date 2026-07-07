@@ -234,10 +234,17 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <main className="pt-28 md:pt-16">
       {/* Hero */}
-      <section className="relative flex items-center bg-background overflow-hidden">
-        <div className="relative w-full max-w-6xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-16 items-center px-5 sm:px-8 md:px-16 lg:px-20 py-12 sm:py-16 md:py-28">
-          {/* Left text */}
-          <div>
+      <section className="relative flex min-h-[720px] items-center overflow-hidden bg-black text-white">
+        <img
+          src="/assets/home-cover-sara-banner.png"
+          alt="Sara Marques trabalhando em frente ao computador"
+          className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
+        />
+        <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
+        <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
+
+        <div className="relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
+          <div className="max-w-3xl">
             <p
               className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
@@ -251,7 +258,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               A imagem{" "}
               <br />
               como{" "}
-              <span className="inline-block rounded-2xl bg-primary px-4 py-1 text-primary-foreground shadow-[0_18px_40px_rgba(170,125,206,0.24)]">
+              <span className="text-primary drop-shadow-[0_10px_28px_rgba(170,125,206,0.35)]">
                 ferramenta{" "}
                 <br />
                 de venda.
@@ -266,19 +273,11 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               </button>
               <button
                 onClick={() => onNav("contact")}
-                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-border text-sm tracking-wide hover:border-accent hover:text-accent"
+                className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-white/50 text-sm tracking-wide text-white hover:border-accent hover:text-accent"
               >
                 Contato
               </button>
             </div>
-          </div>
-
-          <div className="relative bg-muted overflow-hidden min-h-[320px] sm:min-h-[420px] md:min-h-[520px] lg:min-h-[560px] rounded-[1.75rem] shadow-[0_24px_70px_rgba(170,125,206,0.18)]">
-            <img
-              src="/assets/home-cover-sara-banner.png"
-              alt="Sara Marques trabalhando em frente ao computador"
-              className="absolute inset-0 w-full h-full object-cover object-[58%_center]"
-            />
           </div>
         </div>
       </section>
