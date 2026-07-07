@@ -204,7 +204,7 @@ function Navbar({
   ];
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
+    <nav className="fixed top-0 inset-x-0 z-40 bg-header/95 backdrop-blur-md border-b border-primary/25 shadow-[0_10px_34px_rgba(170,125,206,0.12)]">
       <div className="max-w-6xl mx-auto px-4 md:px-8 min-h-16 py-3 md:py-0 grid grid-cols-[2.25rem_1fr_2.25rem] md:flex md:items-center md:justify-between gap-y-3">
         <span className="md:hidden" />
         <button
@@ -226,13 +226,13 @@ function Navbar({
                 className={cn(
                   "w-full text-center text-[0.78rem] sm:text-sm tracking-wide transition-colors relative pb-1 md:w-auto md:pb-0.5",
                   current === l.page
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-primary font-semibold"
+                    : "text-foreground/75 hover:text-primary"
                 )}
               >
                 {l.label}
                 {current === l.page && (
-                  <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-accent" />
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-primary" />
                 )}
               </button>
             </li>
@@ -242,7 +242,7 @@ function Navbar({
         <div className="justify-self-end flex items-center gap-3">
           <button
             onClick={onToggleDark}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            className="p-2 text-primary hover:text-accent hover:bg-primary/10 transition-all"
             aria-label="Alternar tema"
           >
             {dark ? <Sun size={17} /> : <Moon size={17} />}
