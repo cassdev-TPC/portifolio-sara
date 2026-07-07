@@ -284,7 +284,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* About */}
       <section className="relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
-        <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start">
+        <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start md:items-center">
           <div className="md:col-span-2">
             <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
               Sobre mim
