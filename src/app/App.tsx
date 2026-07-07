@@ -352,7 +352,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           onClick={() => onNav("contact")}
           className="btn-modern relative inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground text-sm tracking-widest uppercase hover:bg-background hover:text-foreground"
         >
-          Falar no WhatsApp <ArrowUpRight size={16} />
+          Pagina de Contato <ArrowUpRight size={16} />
         </button>
       </section>
     </main>
@@ -671,7 +671,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
             Sara Marques
           </p>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Videomaker, fotógrafa mobile e gestora de tráfego pago baseada em Birigui, SP.
+            Publicitaria, videomaker, Storymaker, fotografa e gestora de trafego pago.
           </p>
         </div>
         <div>
