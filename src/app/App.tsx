@@ -249,7 +249,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
-              Audiovisual · Birigui, SP
+              Audiovisual ·
             </p>
             <h1
               className="text-5xl sm:text-6xl lg:text-7xl leading-[1.02] mb-7 md:mb-8"
