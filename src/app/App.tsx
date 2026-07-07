@@ -238,7 +238,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         <img
           src="/assets/home-cover-sara-banner.png"
           alt="Sara Marques trabalhando em frente ao computador"
-          className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
+          className="absolute inset-0 h-full w-full object-cover object-[58%_35%]"
         />
         <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
         <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
