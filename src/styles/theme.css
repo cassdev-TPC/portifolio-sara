@@ -183,6 +183,7 @@
 @layer components {
   .btn-modern {
     @apply transition-all duration-300 ease-out;
+    border-radius: 999px;
   }
 
   .btn-modern:hover {
@@ -190,53 +191,4 @@
     box-shadow: 0 16px 34px rgba(170, 125, 206, 0.24);
   }
 
-  .soft-geometry {
-    position: absolute;
-    pointer-events: none;
-    inset: 0;
-    overflow: hidden;
-  }
-
-  .soft-geometry span {
-    position: absolute;
-    display: block;
-    border: 1px solid rgba(170, 125, 206, 0.34);
-    opacity: 0.32;
-  }
-
-  .soft-geometry span:nth-child(1) {
-    width: 74px;
-    height: 74px;
-    top: 13%;
-    right: 8%;
-    transform: rotate(12deg);
-  }
-
-  .soft-geometry span:nth-child(2) {
-    width: 44px;
-    height: 44px;
-    left: 7%;
-    bottom: 18%;
-    transform: rotate(28deg);
-    opacity: 0.24;
-  }
-
-  .soft-geometry span:nth-child(3) {
-    width: 110px;
-    height: 110px;
-    right: 22%;
-    bottom: 9%;
-    border-radius: 50%;
-    opacity: 0.16;
-  }
-
-  .soft-geometry span:nth-child(4) {
-    width: 160px;
-    height: 1px;
-    top: 28%;
-    left: 4%;
-    transform: rotate(-18deg);
-    background: rgba(170, 125, 206, 0.18);
-    border: 0;
-  }
 }

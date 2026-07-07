@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+﻿import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import Admin from "./admin/Admin";
 import Login from "./admin/Login";
@@ -11,7 +11,7 @@ import {
   listGalleryItems,
 } from "../lib/gallery";
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Types
 type Page = "home" | "photos" | "videos" | "contact" | "login" | "admin";
 
 const SERVICES = [
@@ -40,20 +40,9 @@ const CONTACT_TOPICS = [
   },
 ];
 
-// â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Utility
 function cn(...classes: (string | undefined | false | null)[]) {
   return classes.filter(Boolean).join(" ");
-}
-
-function DecorativeGeometry({ className }: { className?: string }) {
-  return (
-    <div className={cn("soft-geometry", className)} aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <span />
-    </div>
-  );
 }
 
 function pageFromPath(pathname: string): Page {
@@ -78,7 +67,7 @@ function pathFromPage(page: Page) {
   return paths[page];
 }
 
-// â”€â”€ Lightbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Lightbox
 function Lightbox({
   photos,
   initialIndex,
@@ -129,7 +118,7 @@ function Lightbox({
       <button
         className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
         onClick={(e) => { e.stopPropagation(); next(); }}
-        aria-label="PrÃ³xima"
+        aria-label="Próxima"
       >
         <ChevronRight size={36} />
       </button>
@@ -164,7 +153,7 @@ function Lightbox({
   );
 }
 
-// â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Navbar
 function Navbar({
   current,
   onNav,
@@ -177,9 +166,9 @@ function Navbar({
   onToggleDark: () => void;
 }) {
   const links: { label: string; page: Page }[] = [
-    { label: "InÃ­cio", page: "home" },
+    { label: "Início", page: "home" },
     { label: "Fotos", page: "photos" },
-    { label: "VÃ­deos", page: "videos" },
+    { label: "Vídeos", page: "videos" },
     { label: "Contato", page: "contact" },
   ];
 
@@ -194,7 +183,7 @@ function Navbar({
         >
           SARA MARQUES
           <span className="text-accent ml-1.5 text-sm" style={{ fontFamily: "DM Mono, monospace" }}>
-            âœ¦
+            *
           </span>
         </button>
 
@@ -240,21 +229,20 @@ function Navbar({
   );
 }
 
-// â”€â”€ HOME PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Home page
 function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <main className="pt-28 md:pt-16">
       {/* Hero */}
       <section className="relative flex items-center bg-background overflow-hidden">
-        <DecorativeGeometry />
         <div className="relative w-full max-w-6xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-16 items-center px-5 sm:px-8 md:px-16 lg:px-20 py-12 sm:py-16 md:py-28">
-          {/* Left â€” text */}
+          {/* Left text */}
           <div>
             <p
               className="text-xs tracking-[0.24em] sm:tracking-[0.3em] uppercase text-accent mb-6 md:mb-8"
               style={{ fontFamily: "DM Mono, monospace" }}
             >
-              Audiovisual Â· Birigui, SP
+              Audiovisual · Birigui, SP
             </p>
             <h1
               className="text-5xl sm:text-6xl lg:text-7xl leading-[1.02] mb-7 md:mb-8"
@@ -262,16 +250,19 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             >
               A imagem{" "}
               <br />
-              como ferramenta{" "}
-              <br />
-              <em className="not-italic text-accent">de venda.</em>
+              como{" "}
+              <span className="inline-block rounded-2xl bg-primary px-4 py-1 text-primary-foreground shadow-[0_18px_40px_rgba(170,125,206,0.24)]">
+                ferramenta{" "}
+                <br />
+                de venda.
+              </span>
             </h1>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => onNav("photos")}
                 className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground"
               >
-                Ver portfÃ³lio <ArrowUpRight size={15} />
+                Ver portfólio <ArrowUpRight size={15} />
               </button>
               <button
                 onClick={() => onNav("contact")}
@@ -282,11 +273,11 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             </div>
           </div>
 
-          <div className="relative bg-muted overflow-hidden min-h-[340px] sm:min-h-[430px] md:min-h-[520px] shadow-[0_24px_70px_rgba(170,125,206,0.16)]">
+          <div className="relative bg-muted overflow-hidden min-h-[320px] sm:min-h-[420px] md:min-h-[520px] lg:min-h-[560px] rounded-[1.75rem] shadow-[0_24px_70px_rgba(170,125,206,0.18)]">
             <img
-              src="/assets/home-cover.png"
-              alt="Equipamentos de fotografia e ediÃ§Ã£o sobre mesa"
-              className="absolute inset-0 w-full h-full object-cover"
+              src="/assets/home-cover-sara-banner.png"
+              alt="Sara Marques trabalhando em frente ao computador"
+              className="absolute inset-0 w-full h-full object-cover object-[58%_center]"
             />
           </div>
         </div>
@@ -294,7 +285,6 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* About */}
       <section className="relative bg-card border-t border-border py-20 md:py-28 px-8 md:px-16 lg:px-20 overflow-hidden">
-        <DecorativeGeometry className="opacity-60" />
         <div className="relative max-w-5xl mx-auto grid md:grid-cols-5 gap-12 md:gap-16 items-start">
           <div className="md:col-span-2">
             <p className="text-xs tracking-[0.3em] uppercase text-accent mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
@@ -303,22 +293,22 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
             <img
               src="/assets/sara-marques.png"
               alt="Sara Marques"
-              className="w-full object-cover bg-muted"
+              className="w-full object-cover bg-muted rounded-2xl"
               style={{ aspectRatio: "4/5" }}
             />
           </div>
           <div className="md:col-span-3 flex flex-col justify-center">
             <p className="text-muted-foreground leading-relaxed mb-4">
-              OlÃ¡! Eu sou a Sara Marques, tenho 19 anos e sou apaixonada por transformar ideias em resultados reais. Sou cristÃ£, e Ã© o que guia minha Ã©tica e dedicaÃ§Ã£o em tudo o que faÃ§o.
+              Olá! Eu sou a Sara Marques, tenho 19 anos e sou apaixonada por transformar ideias em resultados reais. Sou cristã, e é o que guia minha ética e dedicação em tudo o que faço.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Atualmente, curso Publicidade e Propaganda no Unisalesiano de AraÃ§atuba, mergulhando diariamente no universo da comunicaÃ§Ã£o estratÃ©gica.
+              Atualmente, curso Publicidade e Propaganda no Unisalesiano de Araçatuba, mergulhando diariamente no universo da comunicação estratégica.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Minha rotina Ã© dividida entre a precisÃ£o dos dados e a sensibilidade da lente: atuo como Gestora de TrÃ¡fego Pago em uma agÃªncia de publicidade em Birigui e, simultaneamente, dou vida a marcas atravÃ©s do audiovisual como Videomaker e FotÃ³grafa Mobile.
+              Minha rotina é dividida entre a precisão dos dados e a sensibilidade da lente: atuo como Gestora de Tráfego Pago em uma agência de publicidade em Birigui e, simultaneamente, dou vida a marcas através do audiovisual como Videomaker e Fotógrafa Mobile.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Unir a faculdade com a prÃ¡tica de agÃªncia me permite entregar um trabalho que nÃ£o Ã© apenas "bonito", mas focado em conversÃ£o.
+              Unir a faculdade com a prática de agência me permite entregar um trabalho que não é apenas "bonito", mas focado em conversão.
             </p>
           </div>
         </div>
@@ -326,17 +316,16 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* Services */}
       <section className="relative py-20 md:py-28 px-8 md:px-16 lg:px-20 border-t border-border overflow-hidden">
-        <DecorativeGeometry className="opacity-50" />
         <div className="relative max-w-5xl mx-auto">
           <div className="mb-12">
             <p className="text-xs tracking-[0.3em] uppercase text-accent mb-3" style={{ fontFamily: "DM Mono, monospace" }}>
-              ServiÃ§os
+              Serviços
             </p>
             <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "DM Serif Display, serif" }}>
-              O que eu faÃ§o
+              O que eu faço
             </h2>
           </div>
-          <div className="grid sm:grid-cols-2 gap-px bg-border">
+          <div className="grid sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden">
             {SERVICES.map((s) => (
               <div key={s.title} className="bg-background p-8 hover:bg-card transition-all duration-300 group hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(170,125,206,0.16)]">
                 <h3 className="text-lg font-medium mb-3 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -351,7 +340,6 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 
       {/* CTA strip */}
       <section className="relative bg-primary text-primary-foreground py-16 px-8 md:px-16 text-center overflow-hidden">
-        <DecorativeGeometry className="opacity-40" />
         <p className="relative text-xs tracking-[0.3em] uppercase opacity-70 mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
           Vamos trabalhar juntos
         </p>
@@ -359,7 +347,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           className="relative text-3xl md:text-5xl mb-8"
           style={{ fontFamily: "DM Serif Display, serif" }}
         >
-          Seu prÃ³ximo projeto comeÃ§a aqui.
+          Seu próximo projeto começa aqui.
         </h2>
         <button
           onClick={() => onNav("contact")}
@@ -372,7 +360,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   );
 }
 
-// â”€â”€ PHOTOS PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Photos page
 function PhotosPage() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
@@ -383,7 +371,7 @@ function PhotosPage() {
   useEffect(() => {
     listGalleryItems("photos")
       .then(setPhotos)
-      .catch(() => setError("NÃ£o foi possÃ­vel carregar as fotos."))
+      .catch(() => setError("Não foi possível carregar as fotos."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -396,7 +384,6 @@ function PhotosPage() {
 
   return (
     <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
-      <DecorativeGeometry className="opacity-50" />
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="mb-10">
           <p
@@ -412,7 +399,7 @@ function PhotosPage() {
             Fotografias
           </h1>
           <p className="text-muted-foreground max-w-md leading-relaxed">
-            Trabalhos fotogrÃ¡ficos organizados por categoria.
+            Trabalhos fotográficos organizados por categoria.
           </p>
         </div>
 
@@ -442,7 +429,7 @@ function PhotosPage() {
           {filtered.map((photo, i) => (
             <div
               key={photo.id}
-              className="break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               onClick={() => setLightbox(photos.indexOf(photo))}
             >
               <img
@@ -485,7 +472,7 @@ function PhotosPage() {
   );
 }
 
-// â”€â”€ VIDEOS PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Videos page
 function VideosPage() {
   const [videos, setVideos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState(DEFAULT_VIDEO_CATEGORIES[0]);
@@ -496,7 +483,7 @@ function VideosPage() {
   useEffect(() => {
     listGalleryItems("videos")
       .then(setVideos)
-      .catch(() => setError("NÃ£o foi possÃ­vel carregar os vÃ­deos."))
+      .catch(() => setError("Não foi possível carregar os vídeos."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -506,27 +493,26 @@ function VideosPage() {
 
   return (
     <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
-      <DecorativeGeometry className="opacity-50" />
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="mb-10">
           <p
             className="text-xs tracking-[0.3em] uppercase text-accent mb-3"
             style={{ fontFamily: "DM Mono, monospace" }}
           >
-            ProduÃ§Ãµes
+            Produções
           </p>
           <h1
             className="text-5xl md:text-6xl mb-6"
             style={{ fontFamily: "DM Serif Display, serif" }}
           >
-            VÃ­deos
+            Vídeos
           </h1>
           <p className="text-muted-foreground max-w-md leading-relaxed">
-            ProduÃ§Ãµes audiovisuais publicadas por categoria.
+            Produções audiovisuais publicadas por categoria.
           </p>
         </div>
 
-        {loading && <p className="text-muted-foreground mb-8">Carregando vÃ­deos...</p>}
+        {loading && <p className="text-muted-foreground mb-8">Carregando vídeos...</p>}
         {error && <p className="text-accent mb-8">{error}</p>}
 
         {/* Filters */}
@@ -552,7 +538,7 @@ function VideosPage() {
           {filtered.map((v) => (
             <div
               key={v.id}
-              className="group cursor-pointer bg-card border border-border hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="group cursor-pointer bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               onClick={() => setActive(v.id === active ? null : v.id)}
             >
               <div className="relative aspect-video bg-muted overflow-hidden">
@@ -566,7 +552,7 @@ function VideosPage() {
                   </div>
                 </div>
                 <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-0.5" style={{ fontFamily: "DM Mono, monospace" }}>
-                  VÃ­deo
+                  Vídeo
                 </div>
                 <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs px-2 py-0.5 uppercase tracking-wider">
                   {v.category}
@@ -584,8 +570,8 @@ function VideosPage() {
 
               {active === v.id && (
                 <div className="px-5 pb-5 pt-0">
-                  <div className="bg-secondary border border-border p-4 text-sm text-muted-foreground leading-relaxed space-y-3">
-                    <video src={v.url} controls className="w-full bg-black" />
+                  <div className="bg-secondary border border-border rounded-xl p-4 text-sm text-muted-foreground leading-relaxed space-y-3">
+                    <video src={v.url} controls className="w-full bg-black rounded-lg" />
                   </div>
                 </div>
               )}
@@ -594,20 +580,19 @@ function VideosPage() {
         </div>
 
         {!loading && filtered.length === 0 && (
-          <p className="text-muted-foreground text-center py-20">Nenhum vÃ­deo publicado nesta categoria.</p>
+          <p className="text-muted-foreground text-center py-20">Nenhum vídeo publicado nesta categoria.</p>
         )}
       </div>
     </main>
   );
 }
 
-// â”€â”€ CONTACT PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Contact page
 function ContactPage() {
   const whatsappUrl = "https://wa.me/5518996188589?text=Ol%C3%A1%2C%20Sara%21%20Vim%20pelo%20seu%20portf%C3%B3lio%20e%20quero%20falar%20sobre%20um%20projeto.";
 
   return (
     <main className="relative pt-28 md:pt-16 min-h-screen overflow-hidden">
-      <DecorativeGeometry />
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-14 md:py-20">
         <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-start">
           <div>
@@ -624,7 +609,7 @@ function ContactPage() {
               Vamos conversar sobre o seu projeto?
             </h1>
             <p className="text-muted-foreground leading-relaxed max-w-xl mb-8">
-              Para orÃ§amentos, parcerias ou dÃºvidas sobre audiovisual, fotografia mobile e trÃ¡fego pago, fale diretamente com a Sara pelo WhatsApp.
+              Para orçamentos, parcerias ou dúvidas sobre audiovisual, fotografia mobile e tráfego pago, fale diretamente com a Sara pelo WhatsApp.
             </p>
 
             <a
@@ -637,9 +622,9 @@ function ContactPage() {
             </a>
           </div>
 
-          <div className="bg-card border border-border p-6 md:p-8 shadow-[0_18px_50px_rgba(170,125,206,0.12)]">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[0_18px_50px_rgba(170,125,206,0.12)]">
             <p className="text-xs tracking-[0.3em] uppercase text-accent mb-6" style={{ fontFamily: "DM Mono, monospace" }}>
-              InformaÃ§Ãµes
+              Informações
             </p>
             <div className="space-y-6">
               {[
@@ -667,8 +652,7 @@ function ContactPage() {
 
         <div className="mt-16 border-t border-border pt-12 grid md:grid-cols-3 gap-8">
           {CONTACT_TOPICS.map((item) => (
-            <div key={item.title} className="relative border border-border bg-card/50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]">
-              <span className="absolute right-5 top-5 h-7 w-7 border border-accent/40 opacity-50 rotate-12" aria-hidden="true" />
+            <div key={item.title} className="relative border border-border bg-card/50 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_18px_36px_rgba(170,125,206,0.14)]">
               <h4 className="font-medium mb-2 text-sm tracking-wide">{item.title}</h4>
               <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
             </div>
@@ -678,7 +662,7 @@ function ContactPage() {
     </main>
   );
 }
-// â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Footer
 function Footer({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <footer className="border-t border-border bg-card">
@@ -688,12 +672,12 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
             Sara Marques
           </p>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Videomaker, fotÃ³grafa mobile e gestora de trÃ¡fego pago baseada em Birigui, SP.
+            Videomaker, fotógrafa mobile e gestora de tráfego pago baseada em Birigui, SP.
           </p>
         </div>
         <div>
           <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
-            NavegaÃ§Ã£o
+            Navegação
           </p>
           <ul className="space-y-2">
             {(["home", "photos", "videos", "contact"] as Page[]).map((p) => (
@@ -702,7 +686,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
                   onClick={() => onNav(p)}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors capitalize"
                 >
-                  {p === "home" ? "InÃ­cio" : p === "photos" ? "Fotos" : p === "videos" ? "VÃ­deos" : "Contato"}
+                  {p === "home" ? "Início" : p === "photos" ? "Fotos" : p === "videos" ? "Vídeos" : "Contato"}
                 </button>
               </li>
             ))}
@@ -721,25 +705,25 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
       </div>
       <div className="border-t border-border px-5 md:px-8 py-4 flex items-center justify-between">
         <p className="text-xs text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>
-          Â© 2024 Sara Marques. Todos os direitos reservados.
+          © 2024 Sara Marques. Todos os direitos reservados.
           <button
             onClick={() => onNav("login")}
             className="ml-2 text-muted-foreground/30 hover:text-accent transition-colors align-baseline"
             aria-label="Acesso administrativo"
             title="Acesso"
           >
-            âœ¦
+            *
           </button>
         </p>
         <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
-          Birigui Â· SP
+          Birigui · SP
         </p>
       </div>
     </footer>
   );
 }
 
-// â”€â”€ APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// App
 export default function App() {
   const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname));
   const [dark, setDark] = useState(false);
