@@ -154,7 +154,11 @@ export async function uploadGalleryItem(kind: GalleryKind, file: File, category:
 
   const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
   const safeName = slugify(file.name.replace(/\.[^.]+$/, ""));
-  const filename = `${Date.now()}-${safeName}${extension ? `.${extension}` : ""}`;
+  const uniqueId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const filename = `${Date.now()}-${uniqueId}-${safeName}${extension ? `.${extension}` : ""}`;
   const path = `${kind}/${slugify(category)}/${filename}`;
 
   const { error } = await supabase.storage.from(GALLERY_BUCKET).upload(path, file, {

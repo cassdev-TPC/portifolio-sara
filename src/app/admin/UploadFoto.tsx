@@ -8,7 +8,7 @@ type UploadFotoProps = {
 };
 
 export default function UploadFoto({ onUploaded }: UploadFotoProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [category, setCategory] = useState(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -19,23 +19,36 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
     setMessage("");
     setError("");
 
-    if (!file) {
-      setError("Selecione uma foto.");
+    if (files.length === 0) {
+      setError("Selecione pelo menos uma foto.");
       return;
     }
 
+    let uploadedCount = 0;
+
     try {
       setLoading(true);
-      await uploadGalleryItem("photos", file, category);
+
+      for (const [index, selectedFile] of files.entries()) {
+        setMessage(`Enviando ${index + 1} de ${files.length}: ${selectedFile.name}`);
+        await uploadGalleryItem("photos", selectedFile, category);
+        uploadedCount += 1;
+      }
+
       setError("");
-      setMessage("Foto adicionada com sucesso.");
-      setFile(null);
+      setMessage(`${files.length} foto${files.length > 1 ? "s" : ""} adicionada${files.length > 1 ? "s" : ""} com sucesso.`);
+      setFiles([]);
       setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
       event.currentTarget.reset();
       onUploaded();
     } catch {
       setMessage("");
-      setError("Não foi possível enviar a foto.");
+      setError(
+        uploadedCount > 0
+          ? `${uploadedCount} foto${uploadedCount > 1 ? "s foram enviadas" : " foi enviada"}, mas uma falhou. Tente enviar novamente o arquivo que faltou.`
+          : "Não foi possível enviar as fotos."
+      );
+      if (uploadedCount > 0) onUploaded();
     } finally {
       setLoading(false);
     }
@@ -43,19 +56,25 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
 
   return (
     <form onSubmit={submit} className="bg-card border border-border p-5 md:p-6 space-y-4">
-      <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar foto</h2>
+      <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar fotos</h2>
       <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivo</span>
+        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivos</span>
         <input
           type="file"
           accept="image/*"
+          multiple
           onChange={(event) => {
-            setFile(event.target.files?.[0] ?? null);
+            setFiles(Array.from(event.target.files ?? []));
             setMessage("");
             setError("");
           }}
           className="border border-border bg-background px-3 py-2 text-sm"
         />
+        {files.length > 0 && (
+          <span className="text-xs text-muted-foreground">
+            {files.length} foto{files.length > 1 ? "s selecionadas" : " selecionada"}.
+          </span>
+        )}
       </label>
       <label className="flex flex-col gap-2 text-sm">
         <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
@@ -78,7 +97,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50"
         disabled={loading}
       >
-        {loading ? "Enviando..." : "Enviar foto"} <ArrowUpRight size={15} />
+        {loading ? "Enviando..." : `Enviar ${files.length > 1 ? "fotos" : "foto"}`} <ArrowUpRight size={15} />
       </button>
     </form>
   );
