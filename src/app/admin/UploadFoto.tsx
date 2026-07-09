@@ -7,6 +7,10 @@ type UploadFotoProps = {
   onUploaded: () => void;
 };
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error && error.message ? error.message : "Erro inesperado.";
+}
+
 export default function UploadFoto({ onUploaded }: UploadFotoProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [category, setCategory] = useState(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
@@ -42,12 +46,13 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
       setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
       form.reset();
       onUploaded();
-    } catch {
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
       setMessage("");
       setError(
         uploadedCount > 0
-          ? `${uploadedCount} foto${uploadedCount > 1 ? "s foram enviadas" : " foi enviada"}, mas uma falhou. Tente enviar novamente o arquivo que faltou.`
-          : "Não foi possível enviar as fotos."
+          ? `${uploadedCount} foto${uploadedCount > 1 ? "s foram enviadas" : " foi enviada"}, mas uma falhou: ${errorMessage}`
+          : `Não foi possível enviar as fotos: ${errorMessage}`
       );
       if (uploadedCount > 0) onUploaded();
     } finally {

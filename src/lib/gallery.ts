@@ -119,7 +119,7 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || "Nao foi possivel concluir a acao.");
+    throw new Error(data.error || `Nao foi possivel concluir a acao. Status ${response.status}.`);
   }
 
   return data as T;
@@ -150,16 +150,22 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
     }),
   });
 
-  const uploadResponse = await fetch(signed.uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type || "application/octet-stream",
-    },
-    body: file,
-  });
+  let uploadResponse: Response;
+
+  try {
+    uploadResponse = await fetch(signed.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      body: file,
+    });
+  } catch {
+    throw new Error("O navegador bloqueou o envio para o R2. Confira a CORS Policy do bucket e o dominio exato da Vercel.");
+  }
 
   if (!uploadResponse.ok) {
-    throw new Error("Nao foi possivel enviar o arquivo para o Cloudflare R2.");
+    throw new Error(`Nao foi possivel enviar o arquivo para o Cloudflare R2. Status ${uploadResponse.status}.`);
   }
 
   return signed.key;

@@ -13,6 +13,10 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error && error.message ? error.message : "Erro inesperado.";
+}
+
 export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [category, setCategory] = useState(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
@@ -50,12 +54,13 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
       setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
       form.reset();
       onUploaded();
-    } catch {
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
       setMessage("");
       setError(
         uploadedCount > 0
-          ? `${uploadedCount} vídeo${uploadedCount > 1 ? "s foram enviados" : " foi enviado"}, mas um falhou. Tente enviar novamente o arquivo que faltou.`
-          : "Não foi possível enviar os vídeos. Confirme as variáveis do Cloudflare R2 e a política CORS do bucket."
+          ? `${uploadedCount} vídeo${uploadedCount > 1 ? "s foram enviados" : " foi enviado"}, mas um falhou: ${errorMessage}`
+          : `Não foi possível enviar os vídeos: ${errorMessage}`
       );
       if (uploadedCount > 0) onUploaded();
     } finally {
