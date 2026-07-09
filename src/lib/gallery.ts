@@ -12,7 +12,7 @@ export type GalleryItem = {
   createdAt?: string;
 };
 
-export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Eventos"];
+export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Eventos", "Produtos"];
 export const DEFAULT_VIDEO_CATEGORIES = [
   "Serviços e Produtos",
   "Imobiliário",
@@ -63,8 +63,8 @@ function normalizeGalleryCategory(kind: GalleryKind, category: string) {
 
   if (kind === "photos") {
     const aliases: Record<string, string> = {
-      produto: "Retrato",
-      produtos: "Retrato",
+      produto: "Produtos",
+      produtos: "Produtos",
       retrato: "Retrato",
       retratos: "Retrato",
       ensaio: "Ensaios",

@@ -169,7 +169,6 @@ function Lightbox({
           <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
             {photo.category}
           </p>
-          <p className="text-white/50 text-xs mt-1">{photo.name}</p>
         </div>
         <div className="flex gap-1.5 mt-4">
           {photos.map((_, i) => (
@@ -510,7 +509,6 @@ function PhotosPage() {
                   >
                     {photo.category}
                   </p>
-                  <p className="text-white/70 text-xs mt-0.5">{photo.name}</p>
                 </div>
               </div>
             </div>
@@ -627,9 +625,6 @@ function VideosPage() {
                 <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
                   {v.category}
                 </p>
-                <h3 className="font-medium text-base leading-snug mb-2 group-hover:text-accent transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                  {v.name}
-                </h3>
               </div>
 
               {active === v.id && (
@@ -723,15 +718,7 @@ function ContactPage() {
 function Footer({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <footer className="border-t border-border bg-card">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 py-10 grid sm:grid-cols-3 gap-8">
-        <div>
-          <p className="text-lg mb-2" style={{ fontFamily: "DM Serif Display, serif" }}>
-            Sara Marques
-          </p>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Publicitaria, videomaker, Storymaker, fotografa e gestora de trafego pago.
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto px-5 md:px-8 py-10 grid sm:grid-cols-2 gap-8">
         <div>
           <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4" style={{ fontFamily: "DM Mono, monospace" }}>
             Navegação
