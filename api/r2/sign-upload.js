@@ -10,9 +10,9 @@ import {
   safeFileName,
   sendMethodNotAllowed,
   slugify,
-} from "./_shared.ts";
+} from "./_shared.js";
 
-export default async function handler(request: any, response: any) {
+export default async function handler(request, response) {
   if (request.method !== "POST") {
     sendMethodNotAllowed(response);
     return;
@@ -21,7 +21,7 @@ export default async function handler(request: any, response: any) {
   try {
     await requireAdmin(request);
 
-    const body = await readJsonBody(request);
+    const body = readJsonBody(request);
     const kind = parseKind(body.kind);
     const category = String(body.category || "Sem categoria");
     const fileName = String(body.fileName || "arquivo");

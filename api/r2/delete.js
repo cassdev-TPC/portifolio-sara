@@ -7,9 +7,9 @@ import {
   readJsonBody,
   requireAdmin,
   sendMethodNotAllowed,
-} from "./_shared.ts";
+} from "./_shared.js";
 
-export default async function handler(request: any, response: any) {
+export default async function handler(request, response) {
   if (request.method !== "POST") {
     sendMethodNotAllowed(response);
     return;
@@ -18,8 +18,8 @@ export default async function handler(request: any, response: any) {
   try {
     await requireAdmin(request);
 
-    const body = await readJsonBody(request);
-    const key = normalizeObjectKey(String(body.path || ""));
+    const body = readJsonBody(request);
+    const key = normalizeObjectKey(body.path);
     const config = getR2Config();
     const client = getR2Client();
 

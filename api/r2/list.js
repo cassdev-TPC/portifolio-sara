@@ -1,17 +1,17 @@
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { getR2Client, getR2Config, handleApiError, parseKind, sendMethodNotAllowed } from "./_shared.ts";
+import { getR2Client, getR2Config, handleApiError, parseKind, sendMethodNotAllowed } from "./_shared.js";
 
-function titleFromFileName(fileName: string) {
-  return fileName
+function titleFromFileName(fileName) {
+  return String(fileName || "")
     .replace(/^\d+-/, "")
     .replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, "")
     .replace(/\.[^.]+$/, "")
     .replace(/[-_]+/g, " ");
 }
 
-function categoryFromSlug(slug: string) {
+function categoryFromSlug(slug) {
   return (
-    slug
+    String(slug || "")
       .split("-")
       .filter(Boolean)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -19,19 +19,19 @@ function categoryFromSlug(slug: string) {
   );
 }
 
-function categoryKey(category: string) {
-  return category
+function categoryKey(category) {
+  return String(category || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
 }
 
-function normalizeGalleryCategory(kind: "photos" | "videos", category: string) {
+function normalizeGalleryCategory(kind, category) {
   const key = categoryKey(category);
 
   if (kind === "photos") {
-    const aliases: Record<string, string> = {
+    const aliases = {
       produto: "Produtos",
       produtos: "Produtos",
       retrato: "Retrato",
@@ -45,7 +45,7 @@ function normalizeGalleryCategory(kind: "photos" | "videos", category: string) {
     return aliases[key] ?? "Ensaios";
   }
 
-  const aliases: Record<string, string> = {
+  const aliases = {
     storytelling: "Serviços e Produtos",
     "trafego pago": "Serviços e Produtos",
     produto: "Serviços e Produtos",
@@ -69,7 +69,7 @@ function normalizeGalleryCategory(kind: "photos" | "videos", category: string) {
   return aliases[key] ?? "Serviços e Produtos";
 }
 
-export default async function handler(request: any, response: any) {
+export default async function handler(request, response) {
   if (request.method !== "GET") {
     sendMethodNotAllowed(response);
     return;
@@ -80,7 +80,7 @@ export default async function handler(request: any, response: any) {
     const config = getR2Config();
     const client = getR2Client();
     const items = [];
-    let continuationToken: string | undefined;
+    let continuationToken;
 
     do {
       const result = await client.send(
