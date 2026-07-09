@@ -1,0 +1,10 @@
+name = "sara-r2-upload"
+main = "r2-upload-worker.js"
+compatibility_date = "2026-07-09"
+
+[[r2_buckets]]
+binding = "GALERIA"
+bucket_name = "galeria-sara"
+
+[vars]
+ALLOWED_ORIGIN = "https://portifolio-sara.vercel.app"

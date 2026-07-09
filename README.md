@@ -61,6 +61,8 @@ R2_BUCKET=galeria-sara
 R2_PUBLIC_URL=https://pub-a324c717811d497b9c1237129c84ffbd.r2.dev
 R2_ACCESS_KEY_ID=sua-access-key-id-do-r2
 R2_SECRET_ACCESS_KEY=sua-secret-access-key-do-r2
+R2_WORKER_URL=https://seu-worker.workers.dev
+R2_UPLOAD_SECRET=uma-senha-grande-aleatoria
 ```
 
 Não coloque `R2_SECRET_ACCESS_KEY` no código do site nem em variável com prefixo `VITE_`.
@@ -89,4 +91,30 @@ O bucket usa estas pastas:
 - `photos/nome-da-categoria/arquivo`
 - `videos/nome-da-categoria/arquivo`
 
-Depois disso, uploads feitos no painel `/admin` vão direto para o R2 usando URLs assinadas. Qualquer visitante pode visualizar fotos e vídeos, mas upload e exclusão exigem login da administradora e validação do e-mail autorizado no servidor.
+Depois disso, uploads feitos no painel `/admin` usam uma URL assinada. Qualquer visitante pode visualizar fotos e vídeos, mas upload e exclusão exigem login da administradora e validação do e-mail autorizado no servidor.
+
+## Worker para upload no R2
+
+Se o navegador bloquear upload direto no endpoint S3 do R2, use o Worker em `cloudflare-worker/r2-upload-worker.js`.
+
+No Cloudflare:
+
+1. Vá em Workers & Pages.
+2. Crie um Worker chamado `sara-r2-upload`.
+3. Cole o código de `cloudflare-worker/r2-upload-worker.js`.
+4. Em Settings > Bindings, adicione um R2 bucket binding:
+   - Variable name: `GALERIA`
+   - Bucket: `galeria-sara`
+5. Em Variables, adicione:
+   - `UPLOAD_SECRET`: uma senha grande aleatória
+   - `ALLOWED_ORIGIN`: `https://portifolio-sara.vercel.app`
+6. Faça deploy do Worker.
+
+Na Vercel, adicione:
+
+```bash
+R2_WORKER_URL=https://seu-worker.workers.dev
+R2_UPLOAD_SECRET=a-mesma-senha-do-worker
+```
+
+Depois faça redeploy na Vercel.

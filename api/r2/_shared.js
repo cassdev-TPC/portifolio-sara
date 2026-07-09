@@ -1,6 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { createClient } from "@supabase/supabase-js";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 
 export function sendMethodNotAllowed(response) {
   response.setHeader("Allow", "GET, POST");
@@ -24,6 +24,18 @@ export function getR2Config() {
   }
 
   return { accessKeyId, secretAccessKey, bucket, publicUrl, endpoint };
+}
+
+export function getWorkerUploadConfig() {
+  const workerUrl = getEnv("R2_WORKER_URL").replace(/\/$/, "");
+  const uploadSecret = getEnv("R2_UPLOAD_SECRET");
+
+  if (!workerUrl || !uploadSecret) return null;
+  return { workerUrl, uploadSecret };
+}
+
+export function createUploadSignature(key, expiresAt, secret) {
+  return createHmac("sha256", secret).update(`${key}.${expiresAt}`).digest("hex");
 }
 
 export function getR2Client() {
