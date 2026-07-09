@@ -1,5 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 
 type ApiRequest = {
   headers: Record<string, string | string[] | undefined>;
@@ -88,7 +89,7 @@ export function safeFileName(fileName: string) {
   const extension = fileName.includes(".") ? fileName.split(".").pop() : "";
   const withoutExtension = fileName.replace(/\.[^.]+$/, "");
   const safeName = slugify(withoutExtension);
-  const uniqueId = crypto.randomUUID();
+  const uniqueId = randomUUID();
 
   return `${Date.now()}-${uniqueId}-${safeName}${extension ? `.${extension.toLowerCase()}` : ""}`;
 }

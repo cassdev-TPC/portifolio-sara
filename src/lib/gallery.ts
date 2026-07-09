@@ -116,7 +116,14 @@ async function getAdminToken() {
 
 async function requestR2Json<T>(url: string, options: RequestInit = {}) {
   const response = await fetch(url, options);
-  const data = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let data: { error?: string } = {};
+
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    data = { error: raw.slice(0, 180) };
+  }
 
   if (!response.ok) {
     throw new Error(data.error || `Nao foi possivel concluir a acao. Status ${response.status}.`);

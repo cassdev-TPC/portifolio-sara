@@ -7,7 +7,7 @@ import {
   readJsonBody,
   requireAdmin,
   sendMethodNotAllowed,
-} from "./_shared";
+} from "./_shared.ts";
 
 export default async function handler(request: any, response: any) {
   if (request.method !== "POST") {

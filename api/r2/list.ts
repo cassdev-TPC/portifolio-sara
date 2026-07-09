@@ -1,5 +1,5 @@
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { getR2Client, getR2Config, handleApiError, parseKind, sendMethodNotAllowed } from "./_shared";
+import { getR2Client, getR2Config, handleApiError, parseKind, sendMethodNotAllowed } from "./_shared.ts";
 
 function titleFromFileName(fileName: string) {
   return fileName
