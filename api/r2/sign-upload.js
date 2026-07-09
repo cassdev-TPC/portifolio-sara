@@ -32,7 +32,6 @@ export default async function handler(request, response) {
     const command = new PutObjectCommand({
       Bucket: config.bucket,
       Key: key,
-      CacheControl: "public, max-age=31536000, immutable",
     });
 
     const uploadUrl = await getSignedUrl(client, command, { expiresIn: 60 * 20 });
