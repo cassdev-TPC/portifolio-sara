@@ -164,7 +164,8 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
       body: file,
     });
   } catch {
-    throw new Error("O navegador bloqueou o envio para o R2. Confira a CORS Policy do bucket e o dominio exato da Vercel.");
+    const uploadHost = new URL(signed.uploadUrl).hostname;
+    throw new Error(`O navegador bloqueou o envio para ${uploadHost}. Se aparecer workers.dev, atualize o codigo do Worker. Se aparecer r2.cloudflarestorage.com, confira R2_WORKER_URL e R2_UPLOAD_SECRET na Vercel.`);
   }
 
   if (!uploadResponse.ok) {

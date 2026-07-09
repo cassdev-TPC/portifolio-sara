@@ -1,11 +1,9 @@
-function corsHeaders(origin, env) {
-  const allowedOrigin = env.ALLOWED_ORIGIN || "https://portifolio-sara.vercel.app";
-  const responseOrigin = origin === allowedOrigin ? origin : allowedOrigin;
-
+function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": responseOrigin,
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "PUT, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Expose-Headers": "ETag",
     "Access-Control-Max-Age": "3600",
   };
 }
@@ -61,8 +59,7 @@ function timingSafeEqual(a, b) {
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get("Origin") || "";
-    const headers = corsHeaders(origin, env);
+    const headers = corsHeaders();
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers });
