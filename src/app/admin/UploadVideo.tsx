@@ -24,6 +24,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
     setMessage("");
     setError("");
 
@@ -47,7 +48,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
       setMessage(`${files.length} vídeo${files.length > 1 ? "s" : ""} adicionado${files.length > 1 ? "s" : ""} com sucesso.`);
       setFiles([]);
       setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
-      event.currentTarget.reset();
+      form.reset();
       onUploaded();
     } catch {
       setMessage("");

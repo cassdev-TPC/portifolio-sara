@@ -16,6 +16,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
     setMessage("");
     setError("");
 
@@ -39,7 +40,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
       setMessage(`${files.length} foto${files.length > 1 ? "s" : ""} adicionada${files.length > 1 ? "s" : ""} com sucesso.`);
       setFiles([]);
       setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
-      event.currentTarget.reset();
+      form.reset();
       onUploaded();
     } catch {
       setMessage("");
