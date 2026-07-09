@@ -25,7 +25,6 @@ export default async function handler(request, response) {
     const kind = parseKind(body.kind);
     const category = String(body.category || "Sem categoria");
     const fileName = String(body.fileName || "arquivo");
-    const contentType = String(body.contentType || "application/octet-stream");
     const key = `${kind}/${slugify(category)}/${safeFileName(fileName)}`;
     const config = getR2Config();
     const client = getR2Client();
@@ -33,7 +32,6 @@ export default async function handler(request, response) {
     const command = new PutObjectCommand({
       Bucket: config.bucket,
       Key: key,
-      ContentType: contentType,
       CacheControl: "public, max-age=31536000, immutable",
     });
 

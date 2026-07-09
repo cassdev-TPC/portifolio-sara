@@ -153,7 +153,6 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
       kind,
       category,
       fileName: file.name,
-      contentType: file.type || "application/octet-stream",
     }),
   });
 
@@ -162,9 +161,6 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
   try {
     uploadResponse = await fetch(signed.uploadUrl, {
       method: "PUT",
-      headers: {
-        "Content-Type": file.type || "application/octet-stream",
-      },
       body: file,
     });
   } catch {
