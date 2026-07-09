@@ -550,6 +550,10 @@ function VideosPage() {
 
   const filtered = videos.filter((v) => v.category === filter);
 
+  useEffect(() => {
+    setActive(null);
+  }, [filter]);
+
   useScrollReveal([loading, filter, filtered.length]);
 
   return (
@@ -599,26 +603,46 @@ function VideosPage() {
           {filtered.map((v, index) => (
             <div
               key={v.id}
-              className="reveal-on-scroll group cursor-pointer bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="reveal-on-scroll group bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               style={{ "--reveal-delay": `${Math.min(index, 8) * 55}ms` } as Record<string, string>}
-              onClick={() => setActive(v.id === active ? null : v.id)}
             >
               <div className="relative aspect-video bg-muted overflow-hidden">
-                <video src={v.url} className="w-full h-full object-cover" muted />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center">
-                  <div className={cn(
-                    "w-14 h-14 rounded-full border-2 border-white/80 flex items-center justify-center transition-all",
-                    active === v.id ? "bg-accent border-accent scale-110" : "bg-black/30 group-hover:scale-110"
-                  )}>
-                    <Play size={18} className="text-white ml-1" fill="white" />
-                  </div>
-                </div>
-                <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-0.5" style={{ fontFamily: "DM Mono, monospace" }}>
-                  Vídeo
-                </div>
-                <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs px-2 py-0.5 uppercase tracking-wider">
-                  {v.category}
-                </div>
+                {active === v.id ? (
+                  <video
+                    key={v.id}
+                    src={v.url}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full bg-black object-contain"
+                  />
+                ) : (
+                  <>
+                    <video
+                      src={v.url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setActive(v.id)}
+                      className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-center justify-center"
+                      aria-label={`Reproduzir vídeo da categoria ${v.category}`}
+                    >
+                      <span className="w-14 h-14 rounded-full border-2 border-white/80 bg-black/30 flex items-center justify-center transition-all group-hover:scale-110">
+                        <Play size={18} className="text-white ml-1" fill="white" />
+                      </span>
+                    </button>
+                    <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-0.5" style={{ fontFamily: "DM Mono, monospace" }}>
+                      Vídeo
+                    </div>
+                    <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs px-2 py-0.5 uppercase tracking-wider">
+                      {v.category}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="p-5">
@@ -626,14 +650,6 @@ function VideosPage() {
                   {v.category}
                 </p>
               </div>
-
-              {active === v.id && (
-                <div className="px-5 pb-5 pt-0">
-                  <div className="bg-secondary border border-border rounded-xl p-4 text-sm text-muted-foreground leading-relaxed space-y-3">
-                    <video src={v.url} controls className="w-full bg-black rounded-lg" />
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
