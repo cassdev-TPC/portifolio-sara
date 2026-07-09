@@ -410,7 +410,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
           onClick={() => onNav("contact")}
           className="btn-modern relative inline-flex items-center gap-2 px-8 py-4 bg-[#12091a] text-white text-sm tracking-widest uppercase shadow-[0_18px_44px_rgba(18,9,26,0.35)] hover:bg-[#2a0f3d] hover:text-white"
         >
-          Pagina de Contato <ArrowUpRight size={16} />
+          Página de Contato <ArrowUpRight size={16} />
         </button>
       </section>
     </main>

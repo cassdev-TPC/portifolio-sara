@@ -38,6 +38,7 @@ function slugify(value: string) {
 function titleFromFileName(fileName: string) {
   return fileName
     .replace(/^\d+-/, "")
+    .replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, "")
     .replace(/\.[^.]+$/, "")
     .replace(/[-_]+/g, " ");
 }
@@ -110,7 +111,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const { data: folders, error: folderError } = await supabase.storage.from(GALLERY_BUCKET).list(kind, {
-    limit: 100,
+    limit: 1000,
     sortBy: { column: "name", order: "asc" },
   });
 
@@ -122,7 +123,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
       const category = normalizeGalleryCategory(kind, categoryFromSlug(folder.name));
       const prefix = `${kind}/${folder.name}`;
       const { data: files, error } = await supabase.storage.from(GALLERY_BUCKET).list(prefix, {
-        limit: 100,
+        limit: 1000,
         sortBy: { column: "created_at", order: "desc" },
       });
 

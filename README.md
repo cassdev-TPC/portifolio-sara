@@ -47,6 +47,7 @@ No Supabase:
 3. Abra o SQL Editor e execute o arquivo `supabase-storage-policies.sql`.
 4. No final do arquivo, execute também o `insert` com o UUID real da Sara.
 5. Confirme que existe um bucket público chamado `galeria`.
+6. Para vídeos grandes, deixe o limite do bucket `galeria` em pelo menos `1 GB`.
 
 O bucket usa estas pastas:
 

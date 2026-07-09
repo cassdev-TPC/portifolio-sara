@@ -21,8 +21,8 @@ values (
   'galeria',
   'galeria',
   true,
-  104857600,
-  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime']
+  1073741824,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/heic', 'image/heif', 'video/mp4', 'video/webm', 'video/quicktime']
 )
 on conflict (id) do update
 set
