@@ -2,6 +2,8 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const GALLERY_BUCKET = "galeria";
 export type GalleryKind = "photos" | "videos";
+const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL?.replace(/\/$/, "") ?? "";
+const isR2Configured = Boolean(R2_PUBLIC_URL);
 
 export type GalleryItem = {
   id: string;
@@ -107,7 +109,81 @@ export function getCategories(_items: { category: string }[], defaults: string[]
   return defaults;
 }
 
+async function getAdminToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? "";
+}
+
+async function requestR2Json<T>(url: string, options: RequestInit = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || "Nao foi possivel concluir a acao.");
+  }
+
+  return data as T;
+}
+
+async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
+  const data = await requestR2Json<{ items: GalleryItem[] }>(`/api/r2/list?kind=${kind}`);
+  return data.items;
+}
+
+async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase nao configurado.");
+
+  const token = await getAdminToken();
+  if (!token) throw new Error("Faca login novamente para enviar arquivos.");
+
+  const signed = await requestR2Json<{ key: string; uploadUrl: string; publicUrl: string }>("/api/r2/sign-upload", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      kind,
+      category,
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+    }),
+  });
+
+  const uploadResponse = await fetch(signed.uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Nao foi possivel enviar o arquivo para o Cloudflare R2.");
+  }
+
+  return signed.key;
+}
+
+async function deleteR2GalleryItem(path: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase nao configurado.");
+
+  const token = await getAdminToken();
+  if (!token) throw new Error("Faca login novamente para excluir arquivos.");
+
+  await requestR2Json("/api/r2/delete", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ path }),
+  });
+}
+
 export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
+  if (isR2Configured) return listR2GalleryItems(kind);
+
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const { data: folders, error: folderError } = await supabase.storage.from(GALLERY_BUCKET).list(kind, {
@@ -151,6 +227,8 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
 }
 
 export async function uploadGalleryItem(kind: GalleryKind, file: File, category: string) {
+  if (isR2Configured) return uploadR2GalleryItem(kind, file, category);
+
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
@@ -172,6 +250,8 @@ export async function uploadGalleryItem(kind: GalleryKind, file: File, category:
 }
 
 export async function deleteGalleryItem(path: string) {
+  if (isR2Configured) return deleteR2GalleryItem(path);
+
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const { error } = await supabase.storage.from(GALLERY_BUCKET).remove([path]);

@@ -55,7 +55,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
       setError(
         uploadedCount > 0
           ? `${uploadedCount} vídeo${uploadedCount > 1 ? "s foram enviados" : " foi enviado"}, mas um falhou. Tente enviar novamente o arquivo que faltou.`
-          : "Não foi possível enviar os vídeos. Confirme se o bucket do Supabase permite arquivos desse tamanho."
+          : "Não foi possível enviar os vídeos. Confirme as variáveis do Cloudflare R2 e a política CORS do bucket."
       );
       if (uploadedCount > 0) onUploaded();
     } finally {

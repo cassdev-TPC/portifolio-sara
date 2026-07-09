@@ -1,0 +1,50 @@
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+  getR2Client,
+  getR2Config,
+  handleApiError,
+  parseKind,
+  readJsonBody,
+  requireAdmin,
+  safeFileName,
+  sendMethodNotAllowed,
+  slugify,
+} from "./_shared";
+
+export default async function handler(request: any, response: any) {
+  if (request.method !== "POST") {
+    sendMethodNotAllowed(response);
+    return;
+  }
+
+  try {
+    await requireAdmin(request);
+
+    const body = await readJsonBody(request);
+    const kind = parseKind(body.kind);
+    const category = String(body.category || "Sem categoria");
+    const fileName = String(body.fileName || "arquivo");
+    const contentType = String(body.contentType || "application/octet-stream");
+    const key = `${kind}/${slugify(category)}/${safeFileName(fileName)}`;
+    const config = getR2Config();
+    const client = getR2Client();
+
+    const command = new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      ContentType: contentType,
+      CacheControl: "public, max-age=31536000, immutable",
+    });
+
+    const uploadUrl = await getSignedUrl(client, command, { expiresIn: 60 * 20 });
+
+    response.status(200).json({
+      key,
+      uploadUrl,
+      publicUrl: `${config.publicUrl}/${key}`,
+    });
+  } catch (error) {
+    handleApiError(response, error);
+  }
+}
