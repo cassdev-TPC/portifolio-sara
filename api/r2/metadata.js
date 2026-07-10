@@ -1,4 +1,4 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import {
   createUploadSignature,
   getR2Client,
@@ -22,22 +22,27 @@ export default async function handler(request, response) {
 
     const body = readJsonBody(request);
     const key = normalizeObjectKey(body.path);
+    const description = String(body.description || "").trim().slice(0, 240);
     const workerConfig = getWorkerUploadConfig();
 
     if (workerConfig) {
       const expiresAt = Math.floor(Date.now() / 1000) + 60 * 5;
       const signature = createUploadSignature(key, expiresAt, workerConfig.uploadSecret);
-      const deleteUrl = new URL("/delete", workerConfig.workerUrl);
+      const metadataUrl = new URL("/metadata", workerConfig.workerUrl);
 
-      deleteUrl.searchParams.set("key", key);
-      deleteUrl.searchParams.set("exp", String(expiresAt));
-      deleteUrl.searchParams.set("sig", signature);
+      metadataUrl.searchParams.set("key", key);
+      metadataUrl.searchParams.set("exp", String(expiresAt));
+      metadataUrl.searchParams.set("sig", signature);
 
-      const workerResponse = await fetch(deleteUrl, { method: "DELETE" });
+      const workerResponse = await fetch(metadataUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
       const workerData = await workerResponse.json().catch(() => ({}));
 
       if (!workerResponse.ok) {
-        throw new Error(workerData.error || `Worker delete falhou com status ${workerResponse.status}.`);
+        throw new Error(workerData.error || `Worker metadata falhou com status ${workerResponse.status}.`);
       }
 
       response.status(200).json({ ok: true });
@@ -48,16 +53,11 @@ export default async function handler(request, response) {
     const client = getR2Client();
 
     await client.send(
-      new DeleteObjectCommand({
-        Bucket: config.bucket,
-        Key: key,
-      })
-    );
-
-    await client.send(
-      new DeleteObjectCommand({
+      new PutObjectCommand({
         Bucket: config.bucket,
         Key: `${key}.metadata.json`,
+        Body: JSON.stringify({ description }),
+        ContentType: "application/json",
       })
     );
 
