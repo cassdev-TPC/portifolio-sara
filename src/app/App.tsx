@@ -446,12 +446,11 @@ function PhotosPage() {
       ? photos
       : photos.filter((p) => p.category === filter);
 
-  const openPhoto = (photo: GalleryItem) => {
-    const nextIndex = photos.findIndex((item) => item.id === photo.id);
-    if (nextIndex >= 0) setLightbox(nextIndex);
-  };
-
   useScrollReveal([loading, filter, filtered.length]);
+
+  useEffect(() => {
+    setLightbox(null);
+  }, [filter]);
 
   return (
     <main className="page-enter relative pt-28 md:pt-16 min-h-screen overflow-hidden">
@@ -502,7 +501,7 @@ function PhotosPage() {
               key={photo.id}
               className="reveal-on-scroll break-inside-avoid cursor-pointer group overflow-hidden bg-card border border-border rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               style={{ "--reveal-delay": `${Math.min(i, 8) * 45}ms` } as Record<string, string>}
-              onClick={() => openPhoto(photo)}
+              onClick={() => setLightbox(i)}
             >
               <div className="relative overflow-hidden bg-muted">
                 <img
@@ -523,13 +522,9 @@ function PhotosPage() {
                 >
                   {photo.category}
                 </p>
-                {photo.description ? (
+                {photo.description && (
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {photo.description}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground/70 italic">
-                    Sem descrição cadastrada.
                   </p>
                 )}
               </div>
@@ -544,7 +539,7 @@ function PhotosPage() {
 
       {lightbox !== null && (
         <Lightbox
-          photos={photos}
+          photos={filtered}
           initialIndex={lightbox}
           onClose={() => setLightbox(null)}
         />
@@ -671,13 +666,9 @@ function VideosPage() {
                 <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
                   {v.category}
                 </p>
-                {v.description ? (
+                {v.description && (
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {v.description}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground/70 italic">
-                    Sem descrição cadastrada.
                   </p>
                 )}
               </div>
