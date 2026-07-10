@@ -129,6 +129,8 @@ function Lightbox({
 
   const photo = photos[current];
 
+  if (!photo) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
@@ -444,6 +446,11 @@ function PhotosPage() {
       ? photos
       : photos.filter((p) => p.category === filter);
 
+  const openPhoto = (photo: GalleryItem) => {
+    const nextIndex = photos.findIndex((item) => item.id === photo.id);
+    if (nextIndex >= 0) setLightbox(nextIndex);
+  };
+
   useScrollReveal([loading, filter, filtered.length]);
 
   return (
@@ -495,7 +502,7 @@ function PhotosPage() {
               key={photo.id}
               className="reveal-on-scroll break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               style={{ "--reveal-delay": `${Math.min(i, 8) * 45}ms` } as Record<string, string>}
-              onClick={() => setLightbox(photos.indexOf(photo))}
+              onClick={() => openPhoto(photo)}
             >
               <img
                 src={photo.url}

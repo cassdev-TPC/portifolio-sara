@@ -27,7 +27,6 @@ export default async function handler(request, response) {
     const kind = parseKind(body.kind);
     const category = String(body.category || "Sem categoria");
     const fileName = String(body.fileName || "arquivo");
-    const description = String(body.description || "").trim().slice(0, 240);
     const key = `${kind}/${slugify(category)}/${safeFileName(fileName)}`;
     const config = getR2Config();
     const workerConfig = getWorkerUploadConfig();
@@ -41,32 +40,6 @@ export default async function handler(request, response) {
       uploadUrl.searchParams.set("exp", String(expiresAt));
       uploadUrl.searchParams.set("sig", signature);
 
-      if (description) {
-        const workerInfoResponse = await fetch(workerConfig.workerUrl);
-        const workerInfo = await workerInfoResponse.json().catch(() => ({}));
-
-        if (workerInfo.worker !== "sara-r2-upload-v4") {
-          throw new Error("Atualize o codigo do Worker no Cloudflare antes de salvar descricoes.");
-        }
-
-        const metadataUrl = new URL("/metadata", workerConfig.workerUrl);
-
-        metadataUrl.searchParams.set("key", key);
-        metadataUrl.searchParams.set("exp", String(expiresAt));
-        metadataUrl.searchParams.set("sig", signature);
-
-        const metadataResponse = await fetch(metadataUrl, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ description }),
-        });
-        const metadataData = await metadataResponse.json().catch(() => ({}));
-
-        if (!metadataResponse.ok) {
-          throw new Error(metadataData.error || `Worker metadata falhou com status ${metadataResponse.status}.`);
-        }
-      }
-
       response.status(200).json({
         key,
         uploadUrl: uploadUrl.toString(),
@@ -76,17 +49,6 @@ export default async function handler(request, response) {
     }
 
     const client = getR2Client();
-
-    if (description) {
-      await client.send(
-        new PutObjectCommand({
-          Bucket: config.bucket,
-          Key: `${key}.metadata.json`,
-          Body: JSON.stringify({ description }),
-          ContentType: "application/json",
-        })
-      );
-    }
 
     const command = new PutObjectCommand({
       Bucket: config.bucket,

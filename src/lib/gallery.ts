@@ -175,6 +175,10 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
     throw new Error(`Não foi possível enviar o arquivo para o Cloudflare R2. Status ${uploadResponse.status}.`);
   }
 
+  if (description.trim()) {
+    await updateR2GalleryItemDescription(signed.key, description);
+  }
+
   return signed.key;
 }
 
