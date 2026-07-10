@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { createPortal } from "react-dom";
 import Admin from "./admin/Admin";
 import Login from "./admin/Login";
 import ProtectedRoute from "./admin/ProtectedRoute";
@@ -118,9 +119,6 @@ function Lightbox({
   const next = useCallback(() => setCurrent((i) => (i + 1) % photos.length), [photos.length]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") prev();
@@ -130,7 +128,6 @@ function Lightbox({
 
     return () => {
       window.removeEventListener("keydown", handler);
-      document.body.style.overflow = previousOverflow;
     };
   }, [onClose, prev, next]);
 
@@ -138,9 +135,9 @@ function Lightbox({
 
   if (!photo) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 px-4 py-8 md:px-8 md:py-10 overflow-hidden"
+      className="fixed inset-0 z-[9999] bg-black/95"
       onClick={onClose}
     >
       <button
@@ -152,7 +149,7 @@ function Lightbox({
       </button>
 
       <button
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
         onClick={(e) => { e.stopPropagation(); prev(); }}
         aria-label="Anterior"
       >
@@ -160,19 +157,22 @@ function Lightbox({
       </button>
 
       <button
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
         onClick={(e) => { e.stopPropagation(); next(); }}
         aria-label="Próxima"
       >
         <ChevronRight size={36} />
       </button>
 
-      <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-3 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
-        <div className="flex max-h-[56vh] md:max-h-[60vh] items-center justify-center">
+      <div
+        className="grid h-[100dvh] w-full grid-rows-[minmax(0,1fr)_auto_auto] gap-3 px-12 py-5 sm:px-16 md:px-20 md:py-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex min-h-0 items-center justify-center">
           <img
             src={photo.url}
             alt={photo.name}
-            className="block max-h-[56vh] md:max-h-[60vh] max-w-full object-contain"
+            className="block max-h-full max-w-full object-contain"
           />
         </div>
         <div className="shrink-0 text-center">
@@ -198,7 +198,8 @@ function Lightbox({
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
