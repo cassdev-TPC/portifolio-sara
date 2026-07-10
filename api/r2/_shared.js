@@ -26,6 +26,16 @@ export function getR2Config() {
   return { accessKeyId, secretAccessKey, bucket, publicUrl, endpoint };
 }
 
+export function getR2PublicUrl() {
+  const publicUrl = getEnv("R2_PUBLIC_URL", "VITE_R2_PUBLIC_URL").replace(/\/$/, "");
+
+  if (!publicUrl) {
+    throw new Error("R2_PUBLIC_URL nao configurado na Vercel.");
+  }
+
+  return publicUrl;
+}
+
 export function getWorkerUploadConfig() {
   const workerUrl = getEnv("R2_WORKER_URL").replace(/\/$/, "");
   const uploadSecret = getEnv("R2_UPLOAD_SECRET");

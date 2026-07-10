@@ -1,5 +1,13 @@
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { getR2Client, getR2Config, handleApiError, parseKind, sendMethodNotAllowed } from "./_shared.js";
+import {
+  getR2Client,
+  getR2Config,
+  getR2PublicUrl,
+  getWorkerUploadConfig,
+  handleApiError,
+  parseKind,
+  sendMethodNotAllowed,
+} from "./_shared.js";
 
 function titleFromFileName(fileName) {
   return String(fileName || "")
@@ -69,6 +77,23 @@ function normalizeGalleryCategory(kind, category) {
   return aliases[key] ?? "Serviços e Produtos";
 }
 
+function mapObjectToItem(kind, object, publicUrl) {
+  const key = object.key || object.Key;
+  const uploaded = object.uploaded || object.LastModified?.toISOString?.();
+  const parts = key.split("/");
+  const categorySlug = parts[1] || "sem-categoria";
+  const fileName = parts.at(-1) || key;
+
+  return {
+    id: key,
+    name: titleFromFileName(fileName),
+    path: key,
+    url: `${publicUrl}/${key}`,
+    category: normalizeGalleryCategory(kind, categoryFromSlug(categorySlug)),
+    createdAt: uploaded,
+  };
+}
+
 export default async function handler(request, response) {
   if (request.method !== "GET") {
     sendMethodNotAllowed(response);
@@ -77,6 +102,29 @@ export default async function handler(request, response) {
 
   try {
     const kind = parseKind(request.query.kind);
+    const publicUrl = getR2PublicUrl();
+    const workerConfig = getWorkerUploadConfig();
+
+    if (workerConfig) {
+      const listUrl = new URL("/list", workerConfig.workerUrl);
+      listUrl.searchParams.set("kind", kind);
+
+      const workerResponse = await fetch(listUrl);
+      const workerData = await workerResponse.json().catch(() => ({}));
+
+      if (!workerResponse.ok) {
+        throw new Error(workerData.error || `Worker list falhou com status ${workerResponse.status}.`);
+      }
+
+      const items = (workerData.objects ?? [])
+        .filter((object) => object.key && !object.key.endsWith("/"))
+        .map((object) => mapObjectToItem(kind, object, publicUrl))
+        .sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
+
+      response.status(200).json({ items });
+      return;
+    }
+
     const config = getR2Config();
     const client = getR2Client();
     const items = [];
@@ -94,19 +142,7 @@ export default async function handler(request, response) {
 
       for (const object of result.Contents ?? []) {
         if (!object.Key || object.Key.endsWith("/")) continue;
-
-        const parts = object.Key.split("/");
-        const categorySlug = parts[1] || "sem-categoria";
-        const fileName = parts.at(-1) || object.Key;
-
-        items.push({
-          id: object.Key,
-          name: titleFromFileName(fileName),
-          path: object.Key,
-          url: `${config.publicUrl}/${object.Key}`,
-          category: normalizeGalleryCategory(kind, categoryFromSlug(categorySlug)),
-          createdAt: object.LastModified?.toISOString(),
-        });
+        items.push(mapObjectToItem(kind, object, config.publicUrl));
       }
 
       continuationToken = result.NextContinuationToken;
