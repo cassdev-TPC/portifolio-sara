@@ -26,13 +26,6 @@ export default async function handler(request, response) {
     const workerConfig = getWorkerUploadConfig();
 
     if (workerConfig) {
-      const workerInfoResponse = await fetch(workerConfig.workerUrl);
-      const workerInfo = await workerInfoResponse.json().catch(() => ({}));
-
-      if (workerInfo.worker !== "sara-r2-upload-v5") {
-        throw new Error("Atualize o codigo do Worker no Cloudflare antes de salvar descricoes.");
-      }
-
       const expiresAt = Math.floor(Date.now() / 1000) + 60 * 5;
       const signature = createUploadSignature(key, expiresAt, workerConfig.uploadSecret);
       const metadataUrl = new URL("/metadata", workerConfig.workerUrl);
