@@ -137,7 +137,7 @@ function Lightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/95"
+      className="fixed inset-0 z-[9999] overflow-hidden bg-black/95"
       onClick={onClose}
     >
       <button
@@ -165,14 +165,14 @@ function Lightbox({
       </button>
 
       <div
-        className="grid h-[100dvh] w-full grid-rows-[minmax(0,1fr)_auto_auto] gap-3 px-12 py-5 sm:px-16 md:px-20 md:py-8"
+        className="grid h-[100dvh] w-screen max-w-[100vw] grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden px-10 py-5 sm:px-16 md:px-20 md:py-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex min-h-0 items-center justify-center">
+        <div className="flex min-h-0 min-w-0 w-full items-center justify-center overflow-hidden">
           <img
             src={photo.url}
             alt={photo.name}
-            className="block max-h-full max-w-full object-contain"
+            className="block h-auto w-auto max-h-full max-w-[calc(100vw-5rem)] object-contain sm:max-w-full"
           />
         </div>
         <div className="shrink-0 text-center">
