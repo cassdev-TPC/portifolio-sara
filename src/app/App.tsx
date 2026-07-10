@@ -500,33 +500,38 @@ function PhotosPage() {
           {filtered.map((photo, i) => (
             <div
               key={photo.id}
-              className="reveal-on-scroll break-inside-avoid cursor-pointer group relative overflow-hidden bg-muted rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="reveal-on-scroll break-inside-avoid cursor-pointer group overflow-hidden bg-card border border-border rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               style={{ "--reveal-delay": `${Math.min(i, 8) * 45}ms` } as Record<string, string>}
               onClick={() => openPhoto(photo)}
             >
-              <img
-                src={photo.url}
-                alt={photo.name}
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                }}
-                className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                loading={i > 3 ? "lazy" : undefined}
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-end p-4">
-                <div className="translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <p
-                    className="text-white text-xs tracking-widest uppercase"
-                    style={{ fontFamily: "DM Mono, monospace" }}
-                  >
-                    {photo.category}
+              <div className="relative overflow-hidden bg-muted">
+                <img
+                  src={photo.url}
+                  alt={photo.description || photo.name}
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                  className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  loading={i > 3 ? "lazy" : undefined}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+              </div>
+              <div className="p-4">
+                <p
+                  className="text-xs tracking-widest uppercase text-accent mb-2"
+                  style={{ fontFamily: "DM Mono, monospace" }}
+                >
+                  {photo.category}
+                </p>
+                {photo.description ? (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {photo.description}
                   </p>
-                  {photo.description && (
-                    <p className="text-white/85 text-sm leading-relaxed mt-1 line-clamp-3">
-                      {photo.description}
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground/70 italic">
+                    Sem descrição cadastrada.
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -666,9 +671,13 @@ function VideosPage() {
                 <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
                   {v.category}
                 </p>
-                {v.description && (
+                {v.description ? (
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {v.description}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground/70 italic">
+                    Sem descrição cadastrada.
                   </p>
                 )}
               </div>

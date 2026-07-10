@@ -42,6 +42,15 @@ function metadataKey(key) {
   return `${normalizeKey(key)}.metadata.json`;
 }
 
+async function readDescription(env, key) {
+  const metadataObject = await env.GALERIA.get(metadataKey(key));
+
+  if (!metadataObject) return "";
+
+  const metadata = await metadataObject.json().catch(() => ({}));
+  return typeof metadata.description === "string" ? metadata.description : "";
+}
+
 async function hmacHex(message, secret) {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -119,16 +128,9 @@ export default {
           for (const object of result.objects) {
             if (object.key.endsWith(".metadata.json")) continue;
 
-            let description = "";
-            const metadata = await env.GALERIA.get(metadataKey(object.key), { type: "json" });
-
-            if (metadata && typeof metadata.description === "string") {
-              description = metadata.description;
-            }
-
             objects.push({
               key: object.key,
-              description,
+              description: await readDescription(env, object.key),
               uploaded: object.uploaded?.toISOString?.() || null,
             });
           }
@@ -143,7 +145,7 @@ export default {
       if (request.method === "GET") {
         return json({
           ok: true,
-          worker: "sara-r2-upload-v4",
+          worker: "sara-r2-upload-v5",
           hasBucket: Boolean(env.GALERIA),
           hasSecret: Boolean(env.UPLOAD_SECRET),
         });

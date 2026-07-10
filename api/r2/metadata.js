@@ -29,7 +29,7 @@ export default async function handler(request, response) {
       const workerInfoResponse = await fetch(workerConfig.workerUrl);
       const workerInfo = await workerInfoResponse.json().catch(() => ({}));
 
-      if (workerInfo.worker !== "sara-r2-upload-v4") {
+      if (workerInfo.worker !== "sara-r2-upload-v5") {
         throw new Error("Atualize o codigo do Worker no Cloudflare antes de salvar descricoes.");
       }
 
