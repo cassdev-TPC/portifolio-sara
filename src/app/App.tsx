@@ -140,7 +140,7 @@ function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/95 p-4 md:p-8 overflow-hidden"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/95 px-4 py-10 md:px-8 md:py-12 overflow-hidden"
       onClick={onClose}
     >
       <button
@@ -167,12 +167,12 @@ function Lightbox({
         <ChevronRight size={36} />
       </button>
 
-      <div className="flex h-full max-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col items-center justify-center gap-4 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
-        <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="flex w-full max-w-6xl flex-col items-center justify-start gap-3 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
+        <div className="flex max-h-[64vh] md:max-h-[68vh] items-start justify-center">
           <img
             src={photo.url}
             alt={photo.name}
-            className="block max-h-full max-w-full object-contain"
+            className="block max-h-[64vh] md:max-h-[68vh] max-w-full object-contain"
           />
         </div>
         <div className="shrink-0 text-center">
