@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import Admin from "./admin/Admin";
 import Login from "./admin/Login";
@@ -118,9 +119,6 @@ function Lightbox({
   const next = useCallback(() => setCurrent((i) => (i + 1) % photos.length), [photos.length]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") prev();
@@ -128,19 +126,16 @@ function Lightbox({
     };
     window.addEventListener("keydown", handler);
 
-    return () => {
-      window.removeEventListener("keydown", handler);
-      document.body.style.overflow = previousOverflow;
-    };
+    return () => window.removeEventListener("keydown", handler);
   }, [onClose, prev, next]);
 
   const photo = photos[current];
 
   if (!photo) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/95 p-4 md:p-8 overflow-hidden"
+      className="fixed inset-0 z-50 grid place-items-start justify-items-center bg-black/95 p-4 pt-20 md:p-8 md:pt-24 overflow-hidden"
       onClick={onClose}
     >
       <button
@@ -167,8 +162,8 @@ function Lightbox({
         <ChevronRight size={36} />
       </button>
 
-      <div className="flex h-full max-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col items-center justify-center gap-4 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
-        <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="flex max-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col items-center justify-start gap-4 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
+        <div className="flex min-h-0 max-h-[70vh] items-start justify-center">
           <img
             src={photo.url}
             alt={photo.name}
@@ -198,7 +193,8 @@ function Lightbox({
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -860,3 +856,6 @@ export default function App() {
     </div>
   );
 }
+
+
+
