@@ -118,13 +118,20 @@ function Lightbox({
   const next = useCallback(() => setCurrent((i) => (i + 1) % photos.length), [photos.length]);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [onClose, prev, next]);
 
   const photo = photos[current];
@@ -133,7 +140,7 @@ function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/95 p-4 md:p-8 overflow-hidden"
       onClick={onClose}
     >
       <button
@@ -160,14 +167,15 @@ function Lightbox({
         <ChevronRight size={36} />
       </button>
 
-      <div className="flex flex-col items-center max-w-5xl w-full px-16" onClick={(e) => e.stopPropagation()}>
-        <img
-          src={photo.url}
-          alt={photo.name}
-          className="max-h-[80vh] w-auto object-contain"
-          style={{ maxWidth: "100%" }}
-        />
-        <div className="mt-4 text-center">
+      <div className="flex h-full max-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col items-center justify-center gap-4 px-10 md:px-16" onClick={(e) => e.stopPropagation()}>
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <img
+            src={photo.url}
+            alt={photo.name}
+            className="block max-h-full max-w-full object-contain"
+          />
+        </div>
+        <div className="shrink-0 text-center">
           <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
             {photo.category}
           </p>
@@ -177,7 +185,7 @@ function Lightbox({
             </p>
           )}
         </div>
-        <div className="flex gap-1.5 mt-4">
+        <div className="flex shrink-0 gap-1.5">
           {photos.map((_, i) => (
             <button
               key={i}
