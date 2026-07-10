@@ -90,6 +90,7 @@ function mapObjectToItem(kind, object, publicUrl) {
     path: key,
     url: `${publicUrl}/${key}`,
     category: normalizeGalleryCategory(kind, categoryFromSlug(categorySlug)),
+    description: String(object.description || ""),
     createdAt: uploaded,
   };
 }
@@ -117,7 +118,7 @@ export default async function handler(request, response) {
       }
 
       const items = (workerData.objects ?? [])
-        .filter((object) => object.key && !object.key.endsWith("/"))
+        .filter((object) => object.key && !object.key.endsWith("/") && !object.key.endsWith(".metadata.json"))
         .map((object) => mapObjectToItem(kind, object, publicUrl))
         .sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
 
@@ -141,7 +142,7 @@ export default async function handler(request, response) {
       );
 
       for (const object of result.Contents ?? []) {
-        if (!object.Key || object.Key.endsWith("/")) continue;
+        if (!object.Key || object.Key.endsWith("/") || object.Key.endsWith(".metadata.json")) continue;
         items.push(mapObjectToItem(kind, object, config.publicUrl));
       }
 

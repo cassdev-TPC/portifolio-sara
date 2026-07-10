@@ -2,6 +2,7 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const GALLERY_BUCKET = "galeria";
 export type GalleryKind = "photos" | "videos";
+
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL?.replace(/\/$/, "") ?? "";
 const isR2Configured = Boolean(R2_PUBLIC_URL);
 
@@ -11,6 +12,7 @@ export type GalleryItem = {
   path: string;
   url: string;
   category: string;
+  description?: string;
   createdAt?: string;
 };
 
@@ -126,7 +128,7 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data.error || `Nao foi possivel concluir a acao. Status ${response.status}.`);
+    throw new Error(data.error || `Não foi possível concluir a ação. Status ${response.status}.`);
   }
 
   return data as T;
@@ -137,11 +139,11 @@ async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
   return data.items;
 }
 
-async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: string) {
-  if (!isSupabaseConfigured) throw new Error("Supabase nao configurado.");
+async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: string, description = "") {
+  if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const token = await getAdminToken();
-  if (!token) throw new Error("Faca login novamente para enviar arquivos.");
+  if (!token) throw new Error("Faça login novamente para enviar arquivos.");
 
   const signed = await requestR2Json<{ key: string; uploadUrl: string; publicUrl: string }>("/api/r2/sign-upload", {
     method: "POST",
@@ -153,6 +155,7 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
       kind,
       category,
       fileName: file.name,
+      description,
     }),
   });
 
@@ -165,21 +168,21 @@ async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: stri
     });
   } catch {
     const uploadHost = new URL(signed.uploadUrl).hostname;
-    throw new Error(`O navegador bloqueou o envio para ${uploadHost}. Se aparecer workers.dev, atualize o codigo do Worker. Se aparecer r2.cloudflarestorage.com, confira R2_WORKER_URL e R2_UPLOAD_SECRET na Vercel.`);
+    throw new Error(`O navegador bloqueou o envio para ${uploadHost}. Se aparecer workers.dev, atualize o código do Worker. Se aparecer r2.cloudflarestorage.com, confira R2_WORKER_URL e R2_UPLOAD_SECRET na Vercel.`);
   }
 
   if (!uploadResponse.ok) {
-    throw new Error(`Nao foi possivel enviar o arquivo para o Cloudflare R2. Status ${uploadResponse.status}.`);
+    throw new Error(`Não foi possível enviar o arquivo para o Cloudflare R2. Status ${uploadResponse.status}.`);
   }
 
   return signed.key;
 }
 
 async function deleteR2GalleryItem(path: string) {
-  if (!isSupabaseConfigured) throw new Error("Supabase nao configurado.");
+  if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const token = await getAdminToken();
-  if (!token) throw new Error("Faca login novamente para excluir arquivos.");
+  if (!token) throw new Error("Faça login novamente para excluir arquivos.");
 
   await requestR2Json("/api/r2/delete", {
     method: "POST",
@@ -188,6 +191,22 @@ async function deleteR2GalleryItem(path: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ path }),
+  });
+}
+
+async function updateR2GalleryItemDescription(path: string, description: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
+
+  const token = await getAdminToken();
+  if (!token) throw new Error("Faça login novamente para alterar a descrição.");
+
+  await requestR2Json("/api/r2/metadata", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ path, description }),
   });
 }
 
@@ -227,6 +246,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
             path,
             url: data.publicUrl,
             category,
+            description: "",
             createdAt: file.created_at,
           };
         });
@@ -236,8 +256,8 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
   return items.flat().sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
 }
 
-export async function uploadGalleryItem(kind: GalleryKind, file: File, category: string) {
-  if (isR2Configured) return uploadR2GalleryItem(kind, file, category);
+export async function uploadGalleryItem(kind: GalleryKind, file: File, category: string, description = "") {
+  if (isR2Configured) return uploadR2GalleryItem(kind, file, category, description);
 
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
@@ -266,4 +286,9 @@ export async function deleteGalleryItem(path: string) {
 
   const { error } = await supabase.storage.from(GALLERY_BUCKET).remove([path]);
   if (error) throw error;
+}
+
+export async function updateGalleryItemDescription(path: string, description: string) {
+  if (isR2Configured) return updateR2GalleryItemDescription(path, description);
+  throw new Error("Descrição editável está disponível apenas na galeria R2.");
 }

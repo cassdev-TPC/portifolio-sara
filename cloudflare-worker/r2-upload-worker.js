@@ -38,6 +38,10 @@ function parseKind(value) {
   throw new Error("Tipo de galeria invalido.");
 }
 
+function metadataKey(key) {
+  return `${normalizeKey(key)}.metadata.json`;
+}
+
 async function hmacHex(message, secret) {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -113,8 +117,18 @@ export default {
           });
 
           for (const object of result.objects) {
+            if (object.key.endsWith(".metadata.json")) continue;
+
+            let description = "";
+            const metadata = await env.GALERIA.get(metadataKey(object.key), { type: "json" });
+
+            if (metadata && typeof metadata.description === "string") {
+              description = metadata.description;
+            }
+
             objects.push({
               key: object.key,
+              description,
               uploaded: object.uploaded?.toISOString?.() || null,
             });
           }
@@ -129,7 +143,7 @@ export default {
       if (request.method === "GET") {
         return json({
           ok: true,
-          worker: "sara-r2-upload-v3",
+          worker: "sara-r2-upload-v4",
           hasBucket: Boolean(env.GALERIA),
           hasSecret: Boolean(env.UPLOAD_SECRET),
         });
@@ -142,6 +156,21 @@ export default {
       if (request.method === "DELETE") {
         const key = await verifySignature(url, env.UPLOAD_SECRET);
         await env.GALERIA.delete(key);
+        await env.GALERIA.delete(metadataKey(key));
+        return json({ ok: true, key });
+      }
+
+      if (request.method === "PUT" && url.pathname === "/metadata") {
+        const key = await verifySignature(url, env.UPLOAD_SECRET);
+        const body = await request.json().catch(() => ({}));
+        const description = String(body.description || "").trim().slice(0, 240);
+
+        await env.GALERIA.put(metadataKey(key), JSON.stringify({ description }), {
+          httpMetadata: {
+            contentType: "application/json",
+          },
+        });
+
         return json({ ok: true, key });
       }
 

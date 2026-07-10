@@ -20,6 +20,7 @@ function getErrorMessage(error: unknown) {
 export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [category, setCategory] = useState(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -44,7 +45,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
 
       for (const [index, selectedFile] of files.entries()) {
         setMessage(`Enviando ${index + 1} de ${files.length}: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`);
-        await uploadGalleryItem("videos", selectedFile, category);
+        await uploadGalleryItem("videos", selectedFile, category, description);
         uploadedCount += 1;
       }
 
@@ -52,6 +53,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
       setMessage(`${files.length} vídeo${files.length > 1 ? "s" : ""} adicionado${files.length > 1 ? "s" : ""} com sucesso.`);
       setFiles([]);
       setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
+      setDescription("");
       form.reset();
       onUploaded();
     } catch (error) {
@@ -69,7 +71,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   };
 
   return (
-    <form onSubmit={submit} className="bg-card border border-border p-5 md:p-6 space-y-4">
+    <form onSubmit={submit} className="bg-card border border-border p-5 md:p-6 space-y-4 rounded-2xl">
       <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar vídeos</h2>
       <label className="flex flex-col gap-2 text-sm">
         <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivos</span>
@@ -82,7 +84,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setMessage("");
             setError("");
           }}
-          className="border border-border bg-background px-3 py-2 text-sm"
+          className="border border-border bg-background px-3 py-2 text-sm rounded-xl"
         />
         {files.length > 0 && (
           <span className="text-xs text-muted-foreground">
@@ -102,16 +104,34 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setMessage("");
             setError("");
           }}
-          className="border border-border bg-background px-3 py-2 text-sm"
+          className="border border-border bg-background px-3 py-2 text-sm rounded-xl"
         >
           {DEFAULT_VIDEO_CATEGORIES.filter((cat) => cat !== "Todos").map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
       </label>
+      <label className="flex flex-col gap-2 text-sm">
+        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Descrição</span>
+        <textarea
+          value={description}
+          onChange={(event) => {
+            setDescription(event.target.value);
+            setMessage("");
+            setError("");
+          }}
+          rows={4}
+          maxLength={240}
+          placeholder="Escreva uma descrição curta para aparecer na galeria."
+          className="border border-border bg-background px-3 py-2 text-sm resize-y rounded-xl"
+        />
+        <span className="text-xs text-muted-foreground">
+          Essa descrição será aplicada em todos os vídeos selecionados neste envio.
+        </span>
+      </label>
       {error ? <p className="text-sm text-accent">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
       <button
-        className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
         disabled={loading}
       >
         {loading ? "Enviando..." : `Enviar ${files.length > 1 ? "vídeos" : "vídeo"}`} <ArrowUpRight size={15} />

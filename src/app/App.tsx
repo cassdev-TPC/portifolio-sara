@@ -169,6 +169,11 @@ function Lightbox({
           <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
             {photo.category}
           </p>
+          {photo.description && (
+            <p className="text-white/75 text-sm leading-relaxed mt-2 max-w-xl">
+              {photo.description}
+            </p>
+          )}
         </div>
         <div className="flex gap-1.5 mt-4">
           {photos.map((_, i) => (
@@ -509,6 +514,11 @@ function PhotosPage() {
                   >
                     {photo.category}
                   </p>
+                  {photo.description && (
+                    <p className="text-white/85 text-sm leading-relaxed mt-1 line-clamp-3">
+                      {photo.description}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -649,6 +659,11 @@ function VideosPage() {
                 <p className="text-xs text-muted-foreground mb-1.5 tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
                   {v.category}
                 </p>
+                {v.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {v.description}
+                  </p>
+                )}
               </div>
             </div>
           ))}
