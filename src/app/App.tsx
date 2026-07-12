@@ -141,7 +141,7 @@ function Lightbox({
       onClick={onClose}
     >
       <button
-        className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+        className="absolute top-3 right-3 sm:top-5 sm:right-5 text-white/70 hover:text-white transition-colors z-10 p-2"
         onClick={onClose}
         aria-label="Fechar"
       >
@@ -165,7 +165,7 @@ function Lightbox({
       </button>
 
       <div
-        className="grid h-[100dvh] w-screen max-w-[100vw] grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden px-10 py-5 sm:px-16 md:px-20 md:py-8"
+        className="grid h-[100dvh] w-screen max-w-[100vw] grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden px-10 py-12 sm:px-16 sm:py-8 md:px-20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex min-h-0 min-w-0 w-full items-center justify-center overflow-hidden">
@@ -175,24 +175,24 @@ function Lightbox({
             className="block h-auto w-auto max-h-full max-w-[calc(100vw-5rem)] object-contain sm:max-w-full"
           />
         </div>
-        <div className="shrink-0 text-center">
+        <div className="min-w-0 shrink-0 text-center">
           <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
             {photo.category}
           </p>
           {photo.description && (
-            <p className="text-white/75 text-sm leading-relaxed mt-2 max-w-xl">
+            <p className="mx-auto max-w-[min(34rem,calc(100vw-3rem))] text-white/75 text-sm leading-relaxed mt-2">
               {photo.description}
             </p>
           )}
         </div>
-        <div className="flex shrink-0 gap-1.5">
+        <div className="mx-auto flex max-w-[calc(100vw-2rem)] shrink-0 justify-center gap-1 overflow-hidden px-1 sm:gap-1.5">
           {photos.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrent(i)}
               className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all",
-                i === current ? "bg-white w-4" : "bg-white/30"
+                "h-1 w-1 rounded-full transition-all sm:h-1.5 sm:w-1.5",
+                i === current ? "bg-white w-3 sm:w-4" : "bg-white/30"
               )}
             />
           ))}
