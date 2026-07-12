@@ -763,6 +763,8 @@ function ContactPage() {
 }
 // Footer
 function Footer({ onNav }: { onNav: (p: Page) => void }) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="border-t border-border bg-card">
       <div className="max-w-6xl mx-auto px-5 md:px-8 py-10 grid sm:grid-cols-2 gap-8">
@@ -790,13 +792,14 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>smarquesmedia@gmail.com</li>
             <li>+55 18 99618-8589</li>
-            <li>Birigui, SP</li>
+            <li>@smarques.media</li>
+            <li>@eusahmarques</li>
           </ul>
         </div>
       </div>
       <div className="border-t border-border px-5 md:px-8 py-4 flex items-center justify-between">
         <p className="text-xs text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>
-          © 2024 Sara Marques. Todos os direitos reservados.
+          © {currentYear} Sara Marques. Todos os direitos reservados.
           <button
             onClick={() => onNav("login")}
             className="ml-2 text-muted-foreground/30 hover:text-accent transition-colors align-baseline"
@@ -807,7 +810,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
           </button>
         </p>
         <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
-          Birigui · SP
+          @smarques.media
         </p>
       </div>
     </footer>
