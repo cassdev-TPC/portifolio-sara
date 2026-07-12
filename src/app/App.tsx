@@ -203,6 +203,50 @@ function Lightbox({
   );
 }
 
+function videoPreviewUrl(url: string) {
+  return url.includes("#t=") ? url : `${url}#t=0.1`;
+}
+
+function VideoPreview({ video }: { video: GalleryItem }) {
+  const [ready, setReady] = useState(false);
+
+  return (
+    <>
+      <video
+        src={videoPreviewUrl(video.url)}
+        className={cn(
+          "w-full h-full object-cover transition-opacity duration-300",
+          ready ? "opacity-100" : "opacity-0"
+        )}
+        muted
+        playsInline
+        preload="auto"
+        crossOrigin="anonymous"
+        onLoadedMetadata={(event) => {
+          const element = event.currentTarget;
+
+          if (element.currentTime < 0.05) {
+            try {
+              element.currentTime = Math.min(0.1, Math.max(0, element.duration || 0.1));
+            } catch {
+              // Safari can refuse seeking on some metadata states; the URL fragment still helps.
+            }
+          }
+        }}
+        onLoadedData={() => setReady(true)}
+        onCanPlay={() => setReady(true)}
+      />
+      {!ready && (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(170,125,206,0.32),rgba(0,0,0,0.92))] flex items-center justify-center">
+          <span className="text-white/80 text-xs tracking-[0.28em] uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+            Vídeo
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
 // Navbar
 function Navbar({
   current,
@@ -644,13 +688,7 @@ function VideosPage() {
                   />
                 ) : (
                   <>
-                    <video
-                      src={v.url}
-                      className="w-full h-full object-cover"
-                      muted
-                      playsInline
-                      preload="metadata"
-                    />
+                    <VideoPreview video={v} />
                     <button
                       type="button"
                       onClick={() => setActive(v.id)}
