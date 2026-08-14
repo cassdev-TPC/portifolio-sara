@@ -97,9 +97,9 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             const incompatible = selected.filter((file) => { try { validateVideo(file); return false; } catch { return true; } });
             setFiles(selected.filter((file) => !incompatible.includes(file)));
             setFailed([]);
-            if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
             setMessage("");
             setError("");
+            if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
           }}
           className="border border-border bg-background px-3 py-2 text-sm rounded-xl"
         />
