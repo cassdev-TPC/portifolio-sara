@@ -11,6 +11,8 @@
     "check": "tsc --noEmit",
     "migrate:r2:dry-run": "node scripts/migrate-r2-media.mjs",
     "migrate:r2:apply": "node scripts/migrate-r2-media.mjs --apply"
+    ,"migrate:r2:wrangler:dry-run": "node scripts/migrate-r2-wrangler.mjs"
+    ,"migrate:r2:wrangler:apply": "node scripts/migrate-r2-wrangler.mjs --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1082.0",
