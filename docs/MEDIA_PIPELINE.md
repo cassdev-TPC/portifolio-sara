@@ -11,4 +11,6 @@ Um JSON ao lado do original (`<chave>.metadata.json`) relaciona as variantes, ca
 3. Execute `pnpm migrate:r2:apply`. O script verifica cada destino antes de gravar e pode ser reiniciado.
 4. Guarde os relatórios. Os arquivos sob `photos/` e `videos/` nunca são substituídos ou apagados.
 
+Quando a CLI do Wrangler estiver autenticada, use `pnpm migrate:r2:wrangler:dry-run` e `pnpm migrate:r2:wrangler:apply`; esse fluxo não exige copiar credenciais S3 para o computador.
+
 Para recuperação, remova apenas referências de variantes dos JSONs (não os originais) ou restaure o código anterior; as URLs legadas continuam válidas. MOVs são inventariados como `needsConversion`; a conversão não roda em Worker/Vercel e deve ser feita localmente ou em serviço especializado após decisão de custo.
