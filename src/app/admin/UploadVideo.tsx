@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { DEFAULT_VIDEO_CATEGORIES, uploadGalleryItem } from "../../lib/gallery";
+import { DEFAULT_VIDEO_CATEGORIES, uploadProcessedGalleryItem } from "../../lib/gallery";
+import { processVideo, validateVideo } from "../../lib/mediaProcessing";
 
 type UploadVideoProps = {
   onUploaded: () => void;
@@ -24,6 +25,8 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [failed, setFailed] = useState<File[]>([]);
 
   const totalSize = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
 
@@ -39,19 +42,29 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
     }
 
     let uploadedCount = 0;
+    const failures: File[] = [];
 
     try {
       setLoading(true);
 
       for (const [index, selectedFile] of files.entries()) {
-        setMessage(`Enviando ${index + 1} de ${files.length}: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`);
-        await uploadGalleryItem("videos", selectedFile, category, description);
-        uploadedCount += 1;
+        try {
+          setMessage(`Gerando capa ${index + 1} de ${files.length}: ${selectedFile.name}`);
+          const processed = await processVideo(selectedFile);
+          await uploadProcessedGalleryItem("videos", category, [
+            { variant: "original", file: processed.original },
+            { variant: "poster", file: processed.poster },
+          ], { width: processed.width, height: processed.height, duration: processed.duration, mediaType: "video", codec: "H.264" }, {
+            description,
+            onProgress: ({ stage, percent }) => { setMessage(`${stage}: ${selectedFile.name}`); setProgress(percent); },
+          });
+          uploadedCount += 1;
+        } catch { failures.push(selectedFile); }
       }
-
-      setError("");
-      setMessage(`${files.length} vídeo${files.length > 1 ? "s" : ""} adicionado${files.length > 1 ? "s" : ""} com sucesso.`);
-      setFiles([]);
+      setFailed(failures);
+      setError(failures.length ? `${failures.length} vídeo${failures.length > 1 ? "s falharam" : " falhou"}. Tente novamente somente esses arquivos.` : "");
+      setMessage(`${uploadedCount} vídeo${uploadedCount === 1 ? " enviado" : "s enviados"} com sucesso.`);
+      setFiles(failures);
       setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
       setDescription("");
       form.reset();
@@ -80,7 +93,11 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
           accept="video/*"
           multiple
           onChange={(event) => {
-            setFiles(Array.from(event.target.files ?? []));
+            const selected = Array.from(event.target.files ?? []);
+            const incompatible = selected.filter((file) => { try { validateVideo(file); return false; } catch { return true; } });
+            setFiles(selected.filter((file) => !incompatible.includes(file)));
+            setFailed([]);
+            if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
             setMessage("");
             setError("");
           }}
@@ -130,11 +147,12 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
         </span>
       </label>
       {error ? <p className="text-sm text-accent">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
+      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
       <button
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
         disabled={loading}
       >
-        {loading ? "Enviando..." : `Enviar ${files.length > 1 ? "vídeos" : "vídeo"}`} <ArrowUpRight size={15} />
+        {loading ? "Gerando capa e enviando..." : failed.length ? "Tentar novamente os que falharam" : `Enviar ${files.length > 1 ? "vídeos" : "vídeo"}`} <ArrowUpRight size={15} />
       </button>
     </form>
   );

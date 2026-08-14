@@ -170,7 +170,7 @@ function Lightbox({
       >
         <div className="flex min-h-0 min-w-0 w-full items-center justify-center overflow-hidden">
           <img
-            src={photo.url}
+            src={photo.optimizedUrl || photo.url}
             alt={photo.name}
             className="block h-auto w-auto max-h-full max-w-[calc(100vw-5rem)] object-contain sm:max-w-full"
           />
@@ -203,31 +203,8 @@ function Lightbox({
   );
 }
 
-function videoPreviewUrl(url: string) {
-  return url.includes("#t=") ? url : `${url}#t=0.1`;
-}
-
 function VideoPreview({ video }: { video: GalleryItem }) {
-  return (
-    <video
-      src={videoPreviewUrl(video.url)}
-      className="w-full h-full object-cover"
-      muted
-      playsInline
-      preload="metadata"
-      onLoadedMetadata={(event) => {
-        const element = event.currentTarget;
-
-        if (element.currentTime < 0.05) {
-          try {
-            element.currentTime = Math.min(0.1, Math.max(0, element.duration || 0.1));
-          } catch {
-            // Safari can refuse seeking on some metadata states; the URL fragment still helps.
-          }
-        }
-      }}
-    />
-  );
+  return video.posterUrl ? <img src={video.posterUrl} alt="Capa do vídeo" loading="lazy" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-background" />;
 }
 
 // Navbar
@@ -541,7 +518,7 @@ function PhotosPage() {
             >
               <div className="relative overflow-hidden bg-muted">
                 <img
-                  src={photo.url}
+                  src={photo.thumbnailUrl || photo.url}
                   alt={photo.description || photo.name}
                   onError={(event) => {
                     event.currentTarget.style.display = "none";
@@ -666,7 +643,8 @@ function VideosPage() {
                     src={v.url}
                     controls
                     playsInline
-                    preload="metadata"
+                    preload="none"
+                    autoPlay
                     className="w-full h-full bg-black object-contain"
                   />
                 ) : (

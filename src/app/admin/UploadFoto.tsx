@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { DEFAULT_PHOTO_CATEGORIES, uploadGalleryItem } from "../../lib/gallery";
+import { DEFAULT_PHOTO_CATEGORIES, uploadProcessedGalleryItem } from "../../lib/gallery";
+import { processPhoto } from "../../lib/mediaProcessing";
 
 type UploadFotoProps = {
   onUploaded: () => void;
@@ -18,6 +19,8 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [failed, setFailed] = useState<File[]>([]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,19 +34,33 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
     }
 
     let uploadedCount = 0;
+    const failures: File[] = [];
 
     try {
       setLoading(true);
 
       for (const [index, selectedFile] of files.entries()) {
-        setMessage(`Enviando ${index + 1} de ${files.length}: ${selectedFile.name}`);
-        await uploadGalleryItem("photos", selectedFile, category, description);
-        uploadedCount += 1;
+        try {
+          setMessage(`Processando ${index + 1} de ${files.length}: ${selectedFile.name}`);
+          setProgress(0);
+          const processed = await processPhoto(selectedFile);
+          await uploadProcessedGalleryItem("photos", category, [
+            { variant: "original", file: processed.original },
+            { variant: "optimized", file: processed.optimized },
+            { variant: "thumbnail", file: processed.thumbnail },
+          ], { width: processed.width, height: processed.height, mediaType: "photo" }, {
+            description,
+            onProgress: ({ stage, percent }) => { setMessage(`${stage}: ${selectedFile.name}`); setProgress(percent); },
+          });
+          uploadedCount += 1;
+        } catch {
+          failures.push(selectedFile);
+        }
       }
-
-      setError("");
-      setMessage(`${files.length} foto${files.length > 1 ? "s" : ""} adicionada${files.length > 1 ? "s" : ""} com sucesso.`);
-      setFiles([]);
+      setFailed(failures);
+      setError(failures.length ? `${failures.length} foto${failures.length > 1 ? "s falharam" : " falhou"}. Você pode tentar novamente somente essas.` : "");
+      setMessage(`${uploadedCount} foto${uploadedCount === 1 ? " enviada" : "s enviadas"} com sucesso.`);
+      setFiles(failures);
       setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
       setDescription("");
       form.reset();
@@ -83,6 +100,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
             {files.length} foto{files.length > 1 ? "s selecionadas" : " selecionada"}.
           </span>
         )}
+        {files.length > 0 && <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">{files.map((file) => <img key={`${file.name}-${file.lastModified}`} src={URL.createObjectURL(file)} alt={file.name} className="h-20 w-full rounded-lg object-cover" />)}</div>}
       </label>
       <label className="flex flex-col gap-2 text-sm">
         <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
@@ -119,11 +137,12 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
         </span>
       </label>
       {error ? <p className="text-sm text-accent">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
+      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
       <button
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
         disabled={loading}
       >
-        {loading ? "Enviando..." : `Enviar ${files.length > 1 ? "fotos" : "foto"}`} <ArrowUpRight size={15} />
+        {loading ? "Processando e enviando..." : failed.length ? "Tentar novamente as que falharam" : `Enviar ${files.length > 1 ? "fotos" : "foto"}`} <ArrowUpRight size={15} />
       </button>
     </form>
   );
