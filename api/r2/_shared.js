@@ -79,7 +79,8 @@ export function slugify(value) {
 export function normalizeObjectKey(path) {
   const key = String(path || "").replace(/^\/+/, "");
 
-  if (!key.startsWith("photos/") && !key.startsWith("videos/")) {
+  const allowed = ["photos/", "videos/", "originals/photos/", "originals/videos/", "optimized/photos/", "thumbnails/photos/", "posters/videos/"];
+  if (!allowed.some((prefix) => key.startsWith(prefix))) {
     throw new Error("Caminho invalido.");
   }
 

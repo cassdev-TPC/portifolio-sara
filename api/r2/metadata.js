@@ -23,6 +23,7 @@ export default async function handler(request, response) {
     const body = readJsonBody(request);
     const key = normalizeObjectKey(body.path);
     const description = String(body.description || "").trim().slice(0, 240);
+    const metadata = { ...(body.metadata && typeof body.metadata === "object" ? body.metadata : {}), description };
     const workerConfig = getWorkerUploadConfig();
 
     if (workerConfig) {
@@ -37,7 +38,7 @@ export default async function handler(request, response) {
       const workerResponse = await fetch(metadataUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify(metadata),
       });
       const workerData = await workerResponse.json().catch(() => ({}));
 
@@ -56,8 +57,9 @@ export default async function handler(request, response) {
       new PutObjectCommand({
         Bucket: config.bucket,
         Key: `${key}.metadata.json`,
-        Body: JSON.stringify({ description }),
+        Body: JSON.stringify(metadata),
         ContentType: "application/json",
+        CacheControl: "no-cache",
       })
     );
 

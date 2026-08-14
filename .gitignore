@@ -5,3 +5,4 @@ dist/
 .env.*
 !.env.example
 .vercel/
+r2-migration-*.json

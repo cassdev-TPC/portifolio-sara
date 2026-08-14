@@ -7,7 +7,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "migrate:r2:dry-run": "node scripts/migrate-r2-media.mjs",
+    "migrate:r2:apply": "node scripts/migrate-r2-media.mjs --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1082.0",
@@ -73,8 +76,13 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "4.7.0",
+    "ffmpeg-static": "^5.2.0",
+    "sharp": "^0.34.3",
     "tailwindcss": "4.1.12",
+    "typescript": "^5.9.2",
     "vite": "6.3.5"
   }
 }

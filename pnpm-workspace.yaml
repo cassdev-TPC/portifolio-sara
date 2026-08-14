@@ -7,7 +7,11 @@ overrides:
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"
   - esbuild
+  - ffmpeg-static
+  - sharp
 
 allowBuilds:
   "@tailwindcss/oxide": true
   esbuild: true
+  ffmpeg-static: true
+  sharp: true

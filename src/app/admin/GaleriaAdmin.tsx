@@ -149,9 +149,9 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
                 <article key={item.path} className="border border-border bg-card overflow-hidden rounded-2xl">
                   <div className="relative aspect-video bg-muted">
                     {kind === "photos" ? (
-                      <img src={item.url} alt={item.description || item.category} className="w-full h-full object-cover" />
+                      <img src={item.thumbnailUrl || item.url} loading="lazy" alt={item.description || item.category} className="w-full h-full object-cover" />
                     ) : (
-                      <video src={item.url} className="w-full h-full object-cover" controls preload="metadata" />
+                      item.posterUrl ? <img src={item.posterUrl} loading="lazy" alt={`Capa: ${item.description || item.category}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />
                     )}
                     <button
                       type="button"

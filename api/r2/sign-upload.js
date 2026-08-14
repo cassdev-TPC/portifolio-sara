@@ -27,7 +27,12 @@ export default async function handler(request, response) {
     const kind = parseKind(body.kind);
     const category = String(body.category || "Sem categoria");
     const fileName = String(body.fileName || "arquivo");
-    const key = `${kind}/${slugify(category)}/${safeFileName(fileName)}`;
+    const variant = String(body.variant || "legacy");
+    const prefixes = kind === "photos"
+      ? { original: "originals/photos", optimized: "optimized/photos", thumbnail: "thumbnails/photos", legacy: "photos" }
+      : { original: "originals/videos", poster: "posters/videos", legacy: "videos" };
+    if (!prefixes[variant]) throw new Error("Versao de midia invalida.");
+    const key = `${prefixes[variant]}/${slugify(category)}/${safeFileName(fileName)}`;
     const config = getR2Config();
     const workerConfig = getWorkerUploadConfig();
 
@@ -53,6 +58,8 @@ export default async function handler(request, response) {
     const command = new PutObjectCommand({
       Bucket: config.bucket,
       Key: key,
+      ContentType: String(body.contentType || "application/octet-stream"),
+      CacheControl: variant === "original" ? "public, max-age=86400" : "public, max-age=31536000, immutable",
     });
 
     const uploadUrl = await getSignedUrl(client, command, { expiresIn: 60 * 20 });

@@ -22,7 +22,8 @@ function json(body, status = 200, headers = {}) {
 function normalizeKey(key) {
   const value = String(key || "").replace(/^\/+/, "");
 
-  if (!value.startsWith("photos/") && !value.startsWith("videos/")) {
+  const allowed = ["photos/", "videos/", "originals/photos/", "originals/videos/", "optimized/photos/", "thumbnails/photos/", "posters/videos/"];
+  if (!allowed.some((prefix) => value.startsWith(prefix))) {
     throw new Error("Caminho invalido.");
   }
 
@@ -42,13 +43,13 @@ function metadataKey(key) {
   return `${normalizeKey(key)}.metadata.json`;
 }
 
-async function readDescription(env, key) {
+async function readMetadata(env, key) {
   const metadataObject = await env.GALERIA.get(metadataKey(key));
 
-  if (!metadataObject) return "";
+  if (!metadataObject) return {};
 
   const metadata = await metadataObject.json().catch(() => ({}));
-  return typeof metadata.description === "string" ? metadata.description : "";
+  return metadata && typeof metadata === "object" ? metadata : {};
 }
 
 async function hmacHex(message, secret) {
@@ -130,13 +131,25 @@ export default {
 
             objects.push({
               key: object.key,
-              description: await readDescription(env, object.key),
+              ...(await readMetadata(env, object.key)),
               uploaded: object.uploaded?.toISOString?.() || null,
             });
           }
 
           cursor = result.truncated ? result.cursor : undefined;
         } while (cursor);
+
+        objects.sort((a, b) => String(b.uploaded ?? "").localeCompare(String(a.uploaded ?? "")));
+
+        let originalsCursor;
+        do {
+          const originals = await env.GALERIA.list({ prefix: `originals/${kind}/`, limit: 1000, cursor: originalsCursor });
+          for (const object of originals.objects) {
+            if (object.key.endsWith(".metadata.json")) continue;
+            objects.push({ key: object.key, ...(await readMetadata(env, object.key)), uploaded: object.uploaded?.toISOString?.() || null });
+          }
+          originalsCursor = originals.truncated ? originals.cursor : undefined;
+        } while (originalsCursor);
 
         objects.sort((a, b) => String(b.uploaded ?? "").localeCompare(String(a.uploaded ?? "")));
         return json({ objects });
@@ -167,7 +180,7 @@ export default {
         const body = await request.json().catch(() => ({}));
         const description = String(body.description || "").trim().slice(0, 240);
 
-        await env.GALERIA.put(metadataKey(key), JSON.stringify({ description }), {
+        await env.GALERIA.put(metadataKey(key), JSON.stringify({ ...body, description }), {
           httpMetadata: {
             contentType: "application/json",
           },
@@ -185,6 +198,7 @@ export default {
       await env.GALERIA.put(key, request.body, {
         httpMetadata: {
           contentType: request.headers.get("Content-Type") || "application/octet-stream",
+          cacheControl: key.startsWith("originals/") ? "public, max-age=86400" : "public, max-age=31536000, immutable",
         },
       });
 

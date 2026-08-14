@@ -14,7 +14,18 @@ export type GalleryItem = {
   category: string;
   description?: string;
   createdAt?: string;
+  originalUrl?: string;
+  optimizedUrl?: string;
+  thumbnailUrl?: string;
+  posterUrl?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+  status?: string;
 };
+
+export type UploadProgress = { stage: string; percent: number };
+export type UploadOptions = { description?: string; onProgress?: (progress: UploadProgress) => void };
 
 export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Eventos", "Produtos"];
 export const DEFAULT_VIDEO_CATEGORIES = [
@@ -139,47 +150,56 @@ async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
   return data.items;
 }
 
-async function uploadR2GalleryItem(kind: GalleryKind, file: File, category: string, description = "") {
+async function signR2Upload(kind: GalleryKind, file: File, category: string, variant: string, token: string) {
+  return requestR2Json<{ key: string; uploadUrl: string; publicUrl: string }>("/api/r2/sign-upload", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ kind, category, variant, fileName: file.name, contentType: file.type }),
+  });
+}
+
+function putWithProgress(url: string, file: File, onProgress?: (percent: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    if (file.type) xhr.setRequestHeader("Content-Type", file.type);
+    xhr.upload.onprogress = (event) => event.lengthComputable && onProgress?.(Math.round(event.loaded / event.total * 100));
+    xhr.onerror = () => reject(new Error("A conexão foi interrompida durante o upload."));
+    xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Falha no upload. Status ${xhr.status}.`));
+    xhr.send(file);
+  });
+}
+
+export async function uploadProcessedGalleryItem(
+  kind: GalleryKind,
+  category: string,
+  files: { variant: string; file: File }[],
+  metadata: Record<string, unknown>,
+  options: UploadOptions = {}
+) {
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const token = await getAdminToken();
   if (!token) throw new Error("Faça login novamente para enviar arquivos.");
 
-  const signed = await requestR2Json<{ key: string; uploadUrl: string; publicUrl: string }>("/api/r2/sign-upload", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      kind,
-      category,
-      fileName: file.name,
-      description,
-    }),
+  const uploaded: Record<string, { key: string; url: string }> = {};
+  for (const [index, entry] of files.entries()) {
+    const signed = await signR2Upload(kind, entry.file, category, entry.variant, token);
+    await putWithProgress(signed.uploadUrl, entry.file, (part) => options.onProgress?.({
+      stage: `Enviando ${entry.variant}`,
+      percent: Math.round(((index + part / 100) / files.length) * 100),
+    }));
+    uploaded[entry.variant] = { key: signed.key, url: signed.publicUrl };
+  }
+  const original = uploaded.original ?? uploaded.legacy;
+  if (!original) throw new Error("O original não foi enviado.");
+  await updateR2GalleryItemMetadata(original.key, options.description ?? "", {
+    ...metadata,
+    variants: Object.fromEntries(Object.entries(uploaded).map(([variant, value]) => [variant, value.key])),
+    status: "ready",
   });
-
-  let uploadResponse: Response;
-
-  try {
-    uploadResponse = await fetch(signed.uploadUrl, {
-      method: "PUT",
-      body: file,
-    });
-  } catch {
-    const uploadHost = new URL(signed.uploadUrl).hostname;
-    throw new Error(`O navegador bloqueou o envio para ${uploadHost}. Se aparecer workers.dev, atualize o código do Worker. Se aparecer r2.cloudflarestorage.com, confira R2_WORKER_URL e R2_UPLOAD_SECRET na Vercel.`);
-  }
-
-  if (!uploadResponse.ok) {
-    throw new Error(`Não foi possível enviar o arquivo para o Cloudflare R2. Status ${uploadResponse.status}.`);
-  }
-
-  if (description.trim()) {
-    await updateR2GalleryItemDescription(signed.key, description);
-  }
-
-  return signed.key;
+  options.onProgress?.({ stage: "Concluído", percent: 100 });
+  return original.key;
 }
 
 async function deleteR2GalleryItem(path: string) {
@@ -199,6 +219,10 @@ async function deleteR2GalleryItem(path: string) {
 }
 
 async function updateR2GalleryItemDescription(path: string, description: string) {
+  return updateR2GalleryItemMetadata(path, description, {});
+}
+
+async function updateR2GalleryItemMetadata(path: string, description: string, metadata: Record<string, unknown>) {
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 
   const token = await getAdminToken();
@@ -210,7 +234,7 @@ async function updateR2GalleryItemDescription(path: string, description: string)
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ path, description }),
+    body: JSON.stringify({ path, description, metadata }),
   });
 }
 
@@ -251,7 +275,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
             url: data.publicUrl,
             category,
             description: "",
-            createdAt: file.created_at,
+            createdAt: file.created_at ?? undefined,
           };
         });
     })
@@ -261,7 +285,7 @@ export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]
 }
 
 export async function uploadGalleryItem(kind: GalleryKind, file: File, category: string, description = "") {
-  if (isR2Configured) return uploadR2GalleryItem(kind, file, category, description);
+  if (isR2Configured) return uploadProcessedGalleryItem(kind, category, [{ variant: "legacy", file }], {}, { description });
 
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 

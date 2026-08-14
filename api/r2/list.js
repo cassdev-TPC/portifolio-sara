@@ -88,10 +88,18 @@ function mapObjectToItem(kind, object, publicUrl) {
     id: key,
     name: titleFromFileName(fileName),
     path: key,
-    url: `${publicUrl}/${key}`,
+    url: `${publicUrl}/${object.variants?.optimized || key}`,
+    originalUrl: `${publicUrl}/${object.variants?.original || key}`,
+    optimizedUrl: `${publicUrl}/${object.variants?.optimized || key}`,
+    thumbnailUrl: `${publicUrl}/${object.variants?.thumbnail || object.variants?.poster || key}`,
+    posterUrl: object.variants?.poster ? `${publicUrl}/${object.variants.poster}` : undefined,
     category: normalizeGalleryCategory(kind, categoryFromSlug(categorySlug)),
     description: String(object.description || ""),
     createdAt: uploaded,
+    width: object.width,
+    height: object.height,
+    duration: object.duration,
+    status: object.status || "legacy",
   };
 }
 
