@@ -83,7 +83,6 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
   }, [kind, refreshKey]);
 
   const remove = async (path: string) => {
-    if (!window.confirm("Excluir somente este arquivo e suas versões derivadas? Esta ação não pode ser desfeita.")) return;
     setDeleting(path);
     setError("");
 
