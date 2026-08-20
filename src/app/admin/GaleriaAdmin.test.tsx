@@ -28,13 +28,14 @@ const photo = {
 
 describe("GaleriaAdmin", () => {
   beforeEach(() => {
-    galleryMocks.listGalleryItems.mockResolvedValue([photo]);
+    vi.clearAllMocks();
     galleryMocks.deleteGalleryItem.mockResolvedValue(undefined);
   });
 
   it("exclui a foto depois de uma única confirmação acessível", async () => {
     const user = userEvent.setup();
     const nativeConfirm = vi.spyOn(window, "confirm");
+    galleryMocks.listGalleryItems.mockResolvedValueOnce([photo]).mockResolvedValueOnce([]);
 
     render(<GaleriaAdmin kind="photos" refreshKey={0} />);
 
@@ -46,7 +47,23 @@ describe("GaleriaAdmin", () => {
     await user.click(screen.getByRole("button", { name: "Excluir este arquivo" }));
 
     await waitFor(() => expect(galleryMocks.deleteGalleryItem).toHaveBeenCalledWith(photo.path));
+    await waitFor(() => expect(galleryMocks.listGalleryItems).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByText("Retrato de teste")).not.toBeInTheDocument());
     expect(nativeConfirm).not.toHaveBeenCalled();
+  });
+
+  it("mantém a foto e mostra o erro devolvido pelo backend quando a exclusão falha", async () => {
+    const user = userEvent.setup();
+    galleryMocks.listGalleryItems.mockResolvedValue([photo]);
+    galleryMocks.deleteGalleryItem.mockRejectedValue(new Error("Worker sem segredo de exclusão configurado."));
+
+    render(<GaleriaAdmin kind="photos" refreshKey={0} />);
+
+    await screen.findByText("Retrato de teste");
+    await user.click(screen.getByRole("button", { name: "Excluir arquivo" }));
+    await user.click(screen.getByRole("button", { name: "Excluir este arquivo" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Worker sem segredo de exclusão configurado.");
+    expect(screen.getByText("Retrato de teste")).toBeInTheDocument();
   });
 });
