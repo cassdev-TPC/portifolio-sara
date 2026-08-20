@@ -53,6 +53,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState("");
   const [saving, setSaving] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<GalleryItem | null>(null);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
@@ -156,7 +157,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
                     )}
                     <button
                       type="button"
-                      onClick={() => remove(item.path)}
+                      onClick={() => setPendingDelete(item)}
                       className="absolute top-3 right-3 p-2 rounded-full bg-black/70 text-white hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
                       disabled={deleting === item.path}
                       aria-label="Excluir arquivo"
@@ -206,6 +207,31 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
           </div>
         ))}
       </div>
+      {pendingDelete && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 p-5" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-description">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <h2 id="delete-title" className="text-2xl">Excluir este arquivo?</h2>
+            <p id="delete-description" className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Serão removidos somente o original, o metadado e as versões derivadas deste item: {pendingDelete.description || pendingDelete.name || pendingDelete.category}.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={() => setPendingDelete(null)} className="min-h-11 rounded-full border border-border px-5 py-2 text-sm">Cancelar</button>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => {
+                  const path = pendingDelete.path;
+                  setPendingDelete(null);
+                  void remove(path);
+                }}
+                className="min-h-11 rounded-full bg-destructive px-5 py-2 text-sm text-destructive-foreground"
+              >
+                Excluir este arquivo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
