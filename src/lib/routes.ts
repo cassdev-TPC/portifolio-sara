@@ -22,7 +22,7 @@ export function pageFromPath(pathname: string): Page {
 
 export const PAGE_META: Record<Page, { title: string; description: string }> = {
   home: { title: "Sara Marques | Fotografia e audiovisual", description: "Portfólio de Sara Marques: fotografia, vídeo e comunicação audiovisual." },
-  photos: { title: "Fotografias | Sara Marques", description: "Galeria de fotografias de Sara Marques, com retratos, ensaios, eventos e produtos." },
+  photos: { title: "Fotografias | Sara Marques", description: "Galeria de fotografias de Sara Marques, com retratos, ensaios, pré-weddings, eventos e produtos." },
   videos: { title: "Vídeos | Sara Marques", description: "Produções audiovisuais de Sara Marques organizadas por categoria." },
   contact: { title: "Contato | Sara Marques", description: "Entre em contato com Sara Marques para conversar sobre fotografia e produção audiovisual." },
   login: { title: "Acesso administrativo | Sara Marques", description: "Acesso restrito à administração do portfólio." },
