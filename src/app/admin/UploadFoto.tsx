@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { DEFAULT_PHOTO_CATEGORIES, uploadProcessedGalleryItem } from "../../lib/gallery";
@@ -10,6 +10,12 @@ type UploadFotoProps = {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error && error.message ? error.message : "Erro inesperado.";
+}
+
+function PhotoPreviews({ files }: { files: File[] }) {
+  const previews = useMemo(() => files.map((file) => ({ file, url: URL.createObjectURL(file) })), [files]);
+  useEffect(() => () => previews.forEach(({ url }) => URL.revokeObjectURL(url)), [previews]);
+  return <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{previews.map(({ file, url }) => <img key={`${file.name}-${file.lastModified}`} src={url} alt={`Prévia de ${file.name}`} className="h-20 w-full rounded-lg object-cover" />)}</div>;
 }
 
 export default function UploadFoto({ onUploaded }: UploadFotoProps) {
@@ -100,7 +106,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
             {files.length} foto{files.length > 1 ? "s selecionadas" : " selecionada"}.
           </span>
         )}
-        {files.length > 0 && <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">{files.map((file) => <img key={`${file.name}-${file.lastModified}`} src={URL.createObjectURL(file)} alt={file.name} className="h-20 w-full rounded-lg object-cover" />)}</div>}
+        {files.length > 0 && <PhotoPreviews files={files} />}
       </label>
       <label className="flex flex-col gap-2 text-sm">
         <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
@@ -136,9 +142,10 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
           Essa descrição será aplicada em todas as fotos selecionadas neste envio.
         </span>
       </label>
-      {error ? <p className="text-sm text-accent">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
-      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
+      <div aria-live="polite">{error ? <p className="text-sm text-destructive">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}</div>
+      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso do envio" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
       <button
+        type="submit"
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
         disabled={loading}
       >

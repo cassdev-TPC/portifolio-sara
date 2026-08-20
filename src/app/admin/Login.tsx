@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { ADMIN_EMAIL, isSupabaseConfigured, supabase } from "../../lib/supabase";
 import { isAdminEmail } from "./ProtectedRoute";
+import { getLoginErrorMessage, withTimeout } from "../../lib/authErrors";
 
 function goToAdmin() {
   window.history.pushState({}, "", "/admin");
@@ -14,10 +15,13 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [message, setMessage] = useState(() => new URLSearchParams(window.location.search).get("reason") === "session-expired" ? "Sua sessão expirou. Entre novamente." : "");
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setMessage("");
 
     if (!isSupabaseConfigured) {
       setError("Supabase ainda não foi configurado neste projeto.");
@@ -25,21 +29,37 @@ export default function Login() {
     }
 
     setLoading(true);
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (loginError) {
-      setError("E-mail ou senha inválidos.");
-      return;
+    try {
+      const { data, error: loginError } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
+      if (loginError) throw loginError;
+      if (!isAdminEmail(data.user.email)) {
+        await supabase.auth.signOut();
+        setError("Esta conta não tem autorização para administrar o portfólio.");
+        return;
+      }
+      goToAdmin();
+    } catch (loginError) {
+      setError(getLoginErrorMessage(loginError));
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (!isAdminEmail(data.user.email)) {
-      await supabase.auth.signOut();
-      setError("Esta conta não tem permissão para administrar o portfólio.");
-      return;
+  const recoverPassword = async () => {
+    setError("");
+    setMessage("");
+    if (!email) { setError("Informe seu e-mail para recuperar a senha."); return; }
+    if (!isSupabaseConfigured) { setError("O acesso administrativo ainda não está configurado."); return; }
+    setRecoveryLoading(true);
+    try {
+      const { error: recoveryError } = await withTimeout(supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` }));
+      if (recoveryError) throw recoveryError;
+      setMessage("Se o e-mail estiver cadastrado, você receberá as instruções de recuperação.");
+    } catch (recoveryError) {
+      setError(getLoginErrorMessage(recoveryError));
+    } finally {
+      setRecoveryLoading(false);
     }
-
-    goToAdmin();
   };
 
   return (
@@ -57,6 +77,8 @@ export default function Login() {
             <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>E-mail</span>
             <input
               type="email"
+              name="email"
+              autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="border border-border bg-background px-3 py-3 text-sm"
@@ -67,6 +89,8 @@ export default function Login() {
             <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Senha</span>
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="border border-border bg-background px-3 py-3 text-sm"
@@ -75,13 +99,18 @@ export default function Login() {
           </label>
         </div>
 
-        {error && <p className="text-sm text-accent mt-4">{error}</p>}
+        <div className="mt-4 min-h-5" aria-live="polite" aria-atomic="true">
+          {error ? <p className="text-sm text-destructive">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
+        </div>
 
         <button
           className="mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50"
-          disabled={loading}
+          disabled={loading || recoveryLoading}
         >
           {loading ? "Entrando..." : "Entrar"} <ArrowUpRight size={15} />
+        </button>
+        <button type="button" onClick={recoverPassword} disabled={loading || recoveryLoading} className="mt-3 w-full min-h-11 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50">
+          {recoveryLoading ? "Enviando instruções..." : "Esqueci minha senha"}
         </button>
       </form>
     </main>

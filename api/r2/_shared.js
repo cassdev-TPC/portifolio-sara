@@ -76,6 +76,16 @@ export function slugify(value) {
   );
 }
 
+const PHOTO_CATEGORIES = new Map([["retrato", "Retrato"], ["retratos", "Retrato"], ["ensaio", "Ensaios"], ["ensaios", "Ensaios"], ["evento", "Eventos"], ["eventos", "Eventos"], ["produto", "Produtos"], ["produtos", "Produtos"]]);
+const VIDEO_CATEGORIES = new Map([["servicos e produtos", "Serviços e Produtos"], ["imobiliario", "Imobiliário"], ["eventos musicais e shows", "Eventos Musicais e Shows"], ["moda e varejo", "Moda e Varejo"], ["eventos sociais", "Eventos Sociais"], ["gastronomia", "Gastronomia"]]);
+
+export function validateCategory(kind, value) {
+  const key = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const category = (kind === "photos" ? PHOTO_CATEGORIES : VIDEO_CATEGORIES).get(key);
+  if (!category) throw new Error("Categoria invalida para esta galeria.");
+  return category;
+}
+
 export function normalizeObjectKey(path) {
   const key = String(path || "").replace(/^\/+/, "");
 

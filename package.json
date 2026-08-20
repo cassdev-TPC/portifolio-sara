@@ -9,10 +9,11 @@
     "dev": "vite",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "test": "vitest run",
     "migrate:r2:dry-run": "node scripts/migrate-r2-media.mjs",
-    "migrate:r2:apply": "node scripts/migrate-r2-media.mjs --apply"
-    ,"migrate:r2:wrangler:dry-run": "node scripts/migrate-r2-wrangler.mjs"
-    ,"migrate:r2:wrangler:apply": "node scripts/migrate-r2-wrangler.mjs --apply"
+    "migrate:r2:apply": "node scripts/migrate-r2-media.mjs --apply",
+    "migrate:r2:wrangler:dry-run": "node scripts/migrate-r2-wrangler.mjs",
+    "migrate:r2:wrangler:apply": "node scripts/migrate-r2-wrangler.mjs --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1082.0",
@@ -78,13 +79,18 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.5",
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "4.7.0",
     "ffmpeg-static": "^5.2.0",
+    "jsdom": "^30.0.1",
     "sharp": "^0.34.3",
     "tailwindcss": "4.1.12",
     "typescript": "^5.9.2",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "vitest": "^4.1.11"
   }
 }

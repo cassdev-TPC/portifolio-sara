@@ -12,6 +12,7 @@ import {
   sendMethodNotAllowed,
   createUploadSignature,
   slugify,
+  validateCategory,
 } from "./_shared.js";
 
 export default async function handler(request, response) {
@@ -25,7 +26,7 @@ export default async function handler(request, response) {
 
     const body = readJsonBody(request);
     const kind = parseKind(body.kind);
-    const category = String(body.category || "Sem categoria");
+    const category = validateCategory(kind, body.category);
     const fileName = String(body.fileName || "arquivo");
     const variant = String(body.variant || "legacy");
     const prefixes = kind === "photos"

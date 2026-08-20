@@ -58,8 +58,10 @@ export default function Admin({ session }: AdminProps) {
             { id: "videos", label: "Vídeos" },
           ].map((item) => (
             <button
+              type="button"
               key={item.id}
               onClick={() => setTab(item.id as "photos" | "videos")}
+              aria-pressed={tab === item.id}
               className={[
                 "px-4 py-1.5 text-xs tracking-wide uppercase transition-all",
                 tab === item.id

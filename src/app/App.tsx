@@ -1,9 +1,13 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, Sun, Moon, Play, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useRef } from "react";
+import type { AnchorHTMLAttributes } from "react";
 import Admin from "./admin/Admin";
 import Login from "./admin/Login";
 import ProtectedRoute from "./admin/ProtectedRoute";
+import { mediaDescription } from "../lib/accessibility";
+import { PAGE_META, PAGE_PATHS, pageFromPath, type Page } from "../lib/routes";
 import {
   DEFAULT_PHOTO_CATEGORIES,
   DEFAULT_VIDEO_CATEGORIES,
@@ -11,9 +15,6 @@ import {
   type GalleryItem,
   listGalleryItems,
 } from "../lib/gallery";
-
-// Types
-type Page = "home" | "photos" | "videos" | "contact" | "login" | "admin";
 
 const SERVICES = [
   {
@@ -54,6 +55,23 @@ function cn(...classes: (string | undefined | false | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+function AppLink({ page, onNav, className, children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { page: Exclude<Page, "not-found">; onNav: (page: Page) => void }) {
+  return (
+    <a
+      href={PAGE_PATHS[page]}
+      className={className}
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onNav(page);
+      }}
+      {...props}
+    >
+      {children}
+    </a>
+  );
+}
+
 function useScrollReveal(deps: unknown[] = []) {
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -81,39 +99,23 @@ function useScrollReveal(deps: unknown[] = []) {
   }, deps);
 }
 
-function pageFromPath(pathname: string): Page {
-  if (pathname === "/login" || pathname === "/admin/login") return "login";
-  if (pathname === "/admin") return "admin";
-  if (pathname === "/fotos") return "photos";
-  if (pathname === "/videos") return "videos";
-  if (pathname === "/contato" || pathname === "/planos") return "contact";
-  return "home";
-}
-
-function pathFromPage(page: Page) {
-  const paths: Record<Page, string> = {
-    home: "/",
-    photos: "/fotos",
-    videos: "/videos",
-    contact: "/contato",
-    login: "/login",
-    admin: "/admin",
-  };
-
-  return paths[page];
-}
-
 // Lightbox
-function Lightbox({
+export function Lightbox({
   photos,
   initialIndex,
   onClose,
+  sourceElement,
 }: {
   photos: GalleryItem[];
   initialIndex: number;
   onClose: () => void;
+  sourceElement: HTMLElement | null;
 }) {
   const [current, setCurrent] = useState(initialIndex);
+  const [imageError, setImageError] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const touchStart = useRef<number | null>(null);
 
   const prev = useCallback(() => setCurrent((i) => (i - 1 + photos.length) % photos.length), [photos.length]);
   const next = useCallback(() => setCurrent((i) => (i + 1) % photos.length), [photos.length]);
@@ -123,13 +125,28 @@ function Lightbox({
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handler);
+    closeRef.current?.focus();
 
     return () => {
       window.removeEventListener("keydown", handler);
+      document.body.style.overflow = previousOverflow;
+      sourceElement?.focus();
     };
-  }, [onClose, prev, next]);
+  }, [onClose, prev, next, sourceElement]);
+
+  useEffect(() => setImageError(false), [current]);
 
   const photo = photos[current];
 
@@ -137,13 +154,26 @@ function Lightbox({
 
   return createPortal(
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lightbox-title"
       className="fixed inset-0 z-[9999] overflow-hidden bg-black/95"
       onClick={onClose}
+      onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(event) => {
+        const start = touchStart.current;
+        const end = event.changedTouches[0]?.clientX;
+        touchStart.current = null;
+        if (start == null || end == null || Math.abs(end - start) < 60) return;
+        end < start ? next() : prev();
+      }}
     >
       <button
+        ref={closeRef}
         className="absolute top-3 right-3 sm:top-5 sm:right-5 text-white/70 hover:text-white transition-colors z-10 p-2"
         onClick={onClose}
-        aria-label="Fechar"
+        aria-label="Fechar visualização da foto"
       >
         <X size={28} />
       </button>
@@ -151,7 +181,7 @@ function Lightbox({
       <button
         className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
         onClick={(e) => { e.stopPropagation(); prev(); }}
-        aria-label="Anterior"
+        aria-label="Foto anterior"
       >
         <ChevronLeft size={36} />
       </button>
@@ -159,37 +189,40 @@ function Lightbox({
       <button
         className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10 p-2"
         onClick={(e) => { e.stopPropagation(); next(); }}
-        aria-label="Próxima"
+        aria-label="Próxima foto"
       >
         <ChevronRight size={36} />
       </button>
 
       <div
-        className="grid h-[100dvh] w-screen max-w-[100vw] grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden px-10 py-12 sm:px-16 sm:py-8 md:px-20"
+        className="grid h-[100dvh] w-full max-w-[100vw] grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden px-11 py-12 sm:px-16 sm:py-8 md:px-20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex min-h-0 min-w-0 w-full items-center justify-center overflow-hidden">
-          <img
-            src={photo.optimizedUrl || photo.url}
-            alt={photo.name}
-            className="block h-auto w-auto max-h-full max-w-[calc(100vw-5rem)] object-contain sm:max-w-full"
-          />
+          {imageError ? (
+            <div className="rounded-xl border border-white/30 bg-white/10 p-6 text-center text-white" role="status">Não foi possível exibir esta foto.</div>
+          ) : (
+            <img
+              src={photo.optimizedUrl || photo.url}
+              alt={mediaDescription(photo, "photos")}
+              onError={() => setImageError(true)}
+              className="block h-auto w-auto max-h-full max-w-full object-contain"
+            />
+          )}
         </div>
         <div className="min-w-0 shrink-0 text-center">
-          <p className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
-            {photo.category}
+          <p id="lightbox-title" className="text-white/90 font-medium text-sm tracking-widest uppercase" style={{ fontFamily: "DM Mono, monospace" }}>
+            {mediaDescription(photo, "photos")}
           </p>
-          {photo.description && (
-            <p className="mx-auto max-w-[min(34rem,calc(100vw-3rem))] text-white/75 text-sm leading-relaxed mt-2">
-              {photo.description}
-            </p>
-          )}
+          <p className="mt-1 text-xs text-white/70" aria-live="polite">Foto {current + 1} de {photos.length} · {photo.category}</p>
         </div>
         <div className="mx-auto flex max-w-[calc(100vw-2rem)] shrink-0 justify-center gap-1 overflow-hidden px-1 sm:gap-1.5">
           {photos.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrent(i)}
+              aria-label={`Ir para foto ${i + 1} de ${photos.length}`}
+              aria-current={i === current ? "true" : undefined}
               className={cn(
                 "h-1 w-1 rounded-full transition-all sm:h-1.5 sm:w-1.5",
                 i === current ? "bg-white w-3 sm:w-4" : "bg-white/30"
@@ -204,7 +237,13 @@ function Lightbox({
 }
 
 function VideoPreview({ video }: { video: GalleryItem }) {
-  return video.posterUrl ? <img src={video.posterUrl} alt="Capa do vídeo" loading="lazy" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-background" />;
+  return video.posterUrl ? <img src={video.posterUrl} alt={mediaDescription(video, "videos")} loading="lazy" width={video.width} height={video.height} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-4 text-center text-sm text-muted-foreground">Capa indisponível</div>;
+}
+
+function PhotoThumbnail({ photo, eager }: { photo: GalleryItem; eager: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <div className="flex min-h-48 w-full items-center justify-center bg-muted p-5 text-center text-sm text-muted-foreground" role="status">Foto indisponível</div>;
+  return <img src={photo.thumbnailUrl || photo.url} alt={mediaDescription(photo, "photos")} onError={() => setFailed(true)} width={photo.width} height={photo.height} className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading={eager ? "eager" : "lazy"} />;
 }
 
 // Navbar
@@ -230,24 +269,27 @@ function Navbar({
     <nav className="fixed top-0 inset-x-0 z-40 bg-header/95 backdrop-blur-md border-b border-primary/25 shadow-[0_10px_34px_rgba(170,125,206,0.12)]">
       <div className="max-w-6xl mx-auto px-4 md:px-8 min-h-16 py-3 md:py-0 grid grid-cols-[2.25rem_1fr_2.25rem] md:flex md:items-center md:justify-between gap-y-3">
         <span className="md:hidden" />
-        <button
-          onClick={() => onNav("home")}
-          className="justify-self-center md:justify-self-auto font-serif text-xl tracking-tight leading-none text-center"
+        <AppLink
+          page="home"
+          onNav={onNav}
+          className="flex min-h-11 items-center justify-self-center text-center font-serif text-xl tracking-tight leading-none md:justify-self-auto"
           style={{ fontFamily: "DM Serif Display, serif" }}
         >
           SARA MARQUES
           <span className="text-accent ml-1.5 text-sm" style={{ fontFamily: "DM Mono, monospace" }}>
             *
           </span>
-        </button>
+        </AppLink>
 
         <ul className="col-span-3 row-start-2 w-full grid grid-cols-4 gap-1 border-t border-border pt-3 md:row-auto md:col-auto md:w-auto md:flex md:items-center md:justify-center md:border-0 md:pt-0 md:gap-8">
           {links.map((l) => (
             <li key={l.page}>
-              <button
-                onClick={() => onNav(l.page)}
+              <AppLink
+                page={l.page as Exclude<Page, "not-found">}
+                onNav={onNav}
+                aria-current={current === l.page ? "page" : undefined}
                 className={cn(
-                  "w-full text-center text-[0.78rem] sm:text-sm tracking-wide transition-colors relative pb-1 md:w-auto md:pb-0.5",
+                  "relative flex min-h-11 w-full items-center justify-center pb-1 text-center text-[0.78rem] tracking-wide transition-colors sm:text-sm md:w-auto md:pb-0.5",
                   current === l.page
                     ? "text-primary font-semibold"
                     : "text-foreground/75 hover:text-primary"
@@ -257,7 +299,7 @@ function Navbar({
                 {current === l.page && (
                   <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-primary" />
                 )}
-              </button>
+              </AppLink>
             </li>
           ))}
         </ul>
@@ -265,18 +307,19 @@ function Navbar({
         <div className="justify-self-end flex items-center gap-3">
           <button
             onClick={onToggleDark}
-            className="p-2 text-primary hover:text-accent hover:bg-primary/10 transition-all"
+            className="flex min-h-11 min-w-11 items-center justify-center p-2 text-primary hover:text-accent hover:bg-primary/10 transition-all"
             aria-label="Alternar tema"
           >
             {dark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
-          <button
+          <AppLink
+            page="contact"
+            onNav={onNav}
             className="btn-modern hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground"
-            onClick={() => onNav("contact")}
           >
             Contato
-          </button>
+          </AppLink>
         </div>
       </div>
     </nav>
@@ -321,18 +364,20 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
               </span>
             </h1>
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => onNav("photos")}
+              <AppLink
+                page="photos"
+                onNav={onNav}
                 className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#c77dff] bg-[#8f3dff] text-sm font-semibold tracking-wide text-white shadow-[0_18px_45px_rgba(143,61,255,0.42)] hover:bg-[#c77dff] hover:border-[#c77dff] hover:text-white"
               >
                 Ver portfólio <ArrowUpRight size={15} />
-              </button>
-              <button
-                onClick={() => onNav("contact")}
+              </AppLink>
+              <AppLink
+                page="contact"
+                onNav={onNav}
                 className="btn-modern inline-flex items-center justify-center gap-2 px-5 py-3 border border-[#c77dff] bg-[#8f3dff] text-sm font-semibold tracking-wide text-white shadow-[0_18px_45px_rgba(143,61,255,0.42)] hover:bg-[#c77dff] hover:border-[#c77dff] hover:text-white"
               >
                 Contato
-              </button>
+              </AppLink>
             </div>
           </div>
         </div>
@@ -426,12 +471,13 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
         >
           Seu próximo projeto começa aqui.
         </h2>
-        <button
-          onClick={() => onNav("contact")}
+        <AppLink
+          page="contact"
+          onNav={onNav}
           className="btn-modern relative inline-flex items-center gap-2 px-8 py-4 bg-[#12091a] text-white text-sm tracking-widest uppercase shadow-[0_18px_44px_rgba(18,9,26,0.35)] hover:bg-[#2a0f3d] hover:text-white"
         >
           Página de Contato <ArrowUpRight size={16} />
-        </button>
+        </AppLink>
       </section>
     </main>
   );
@@ -442,6 +488,7 @@ function PhotosPage() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [lightboxSource, setLightboxSource] = useState<HTMLElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -493,10 +540,12 @@ function PhotosPage() {
         <div className="reveal-on-scroll flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
           {categories.map((cat) => (
             <button
+              type="button"
               key={cat}
               onClick={() => setFilter(cat)}
+              aria-pressed={filter === cat}
               className={cn(
-                "btn-modern px-4 py-1.5 text-xs tracking-wide uppercase",
+                "btn-modern min-h-11 px-4 py-2 text-xs tracking-wide uppercase",
                 filter === cat
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
@@ -510,22 +559,16 @@ function PhotosPage() {
         {/* Masonry-style grid */}
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-3 space-y-3">
           {filtered.map((photo, i) => (
-            <div
+            <button
+              type="button"
               key={photo.id}
-              className="reveal-on-scroll break-inside-avoid cursor-pointer group overflow-hidden bg-card border border-border rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
+              className="reveal-on-scroll mb-3 w-full break-inside-avoid cursor-pointer group overflow-hidden bg-card border border-border rounded-2xl text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(170,125,206,0.16)]"
               style={{ "--reveal-delay": `${Math.min(i, 8) * 45}ms` } as Record<string, string>}
-              onClick={() => setLightbox(i)}
+              onClick={(event) => { setLightboxSource(event.currentTarget); setLightbox(i); }}
+              aria-label={`Abrir ${mediaDescription(photo, "photos")}`}
             >
               <div className="relative overflow-hidden bg-muted">
-                <img
-                  src={photo.thumbnailUrl || photo.url}
-                  alt={photo.description || photo.name}
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
-                  className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  loading={i > 3 ? "lazy" : undefined}
-                />
+                <PhotoThumbnail photo={photo} eager={i < 4} />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
               </div>
               <div className="p-4">
@@ -541,7 +584,7 @@ function PhotosPage() {
                   </p>
                 )}
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -555,6 +598,7 @@ function PhotosPage() {
           photos={filtered}
           initialIndex={lightbox}
           onClose={() => setLightbox(null)}
+          sourceElement={lightboxSource}
         />
       )}
     </main>
@@ -566,6 +610,7 @@ function VideosPage() {
   const [videos, setVideos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState(DEFAULT_VIDEO_CATEGORIES[0]);
   const [active, setActive] = useState<string | null>(null);
+  const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -614,10 +659,12 @@ function VideosPage() {
         <div className="reveal-on-scroll flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
           {categories.map((cat) => (
             <button
+              type="button"
               key={cat}
               onClick={() => setFilter(cat)}
+              aria-pressed={filter === cat}
               className={cn(
-                "btn-modern px-4 py-1.5 text-xs tracking-wide uppercase",
+                "btn-modern min-h-11 px-4 py-2 text-xs tracking-wide uppercase",
                 filter === cat
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
@@ -640,13 +687,18 @@ function VideosPage() {
                 {active === v.id ? (
                   <video
                     key={v.id}
-                    src={v.url}
+                    src={v.originalUrl || v.url}
                     controls
                     playsInline
                     preload="none"
                     autoPlay
+                    aria-label={mediaDescription(v, "videos")}
+                    onError={() => {
+                      setActive(null);
+                      setPlaybackErrors((current) => ({ ...current, [v.id]: "Este formato não é compatível com o seu navegador. O arquivo original permanece preservado." }));
+                    }}
                     className="w-full h-full bg-black object-contain"
-                  />
+                  >Seu navegador não consegue reproduzir este vídeo.</video>
                 ) : (
                   <>
                     <VideoPreview video={v} />
@@ -679,6 +731,7 @@ function VideosPage() {
                     {v.description}
                   </p>
                 )}
+                {playbackErrors[v.id] && <p className="mt-2 text-sm text-destructive" role="alert">{playbackErrors[v.id]}</p>}
               </div>
             </div>
           ))}
@@ -721,7 +774,7 @@ function ContactPage() {
             <a
               href={whatsappUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="btn-modern inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground text-sm tracking-widest uppercase hover:bg-accent hover:text-accent-foreground"
             >
               Chamar no WhatsApp <ArrowUpRight size={16} />
@@ -745,7 +798,7 @@ function ContactPage() {
                     {item.label}
                   </p>
                   {item.href ? (
-                    <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="text-foreground hover:text-accent transition-colors">
+                    <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined} className="inline-flex min-h-11 items-center text-foreground hover:text-accent transition-colors">
                       {item.value}
                     </a>
                   ) : (
@@ -774,12 +827,13 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
           <ul className="space-y-2">
             {(["home", "photos", "videos", "contact"] as Page[]).map((p) => (
               <li key={p}>
-                <button
-                  onClick={() => onNav(p)}
+                <AppLink
+                  page={p as Exclude<Page, "not-found">}
+                  onNav={onNav}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors capitalize"
                 >
                   {p === "home" ? "Início" : p === "photos" ? "Fotos" : p === "videos" ? "Vídeos" : "Contato"}
-                </button>
+                </AppLink>
               </li>
             ))}
           </ul>
@@ -799,20 +853,34 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
       <div className="border-t border-border px-5 md:px-8 py-4 flex items-center justify-between">
         <p className="text-xs text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>
           © {currentYear} Sara Marques. Todos os direitos reservados.
-          <button
-            onClick={() => onNav("login")}
+          <AppLink
+            page="login"
+            onNav={onNav}
             className="ml-2 text-muted-foreground/30 hover:text-accent transition-colors align-baseline"
             aria-label="Acesso administrativo"
             title="Acesso"
           >
             *
-          </button>
+          </AppLink>
         </p>
         <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
           @smarques.media
         </p>
       </div>
     </footer>
+  );
+}
+
+function NotFoundPage({ onNav }: { onNav: (page: Page) => void }) {
+  return (
+    <main className="page-enter flex min-h-screen items-center justify-center px-5 pb-16 pt-32 text-center">
+      <div className="max-w-xl">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent">Erro 404</p>
+        <h1 className="mb-5 text-5xl sm:text-6xl">Página não encontrada</h1>
+        <p className="mb-8 text-muted-foreground">O endereço pode estar incorreto ou a página pode ter mudado.</p>
+        <AppLink page="home" onNav={onNav} className="btn-modern inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 py-3 text-primary-foreground">Voltar ao início</AppLink>
+      </div>
+    </main>
   );
 }
 
@@ -836,10 +904,22 @@ export default function App() {
     return () => window.removeEventListener("popstate", syncPage);
   }, []);
 
+  useEffect(() => {
+    const meta = PAGE_META[page];
+    document.title = meta.title;
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", meta.description);
+    document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", meta.title);
+    document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", meta.description);
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", meta.title);
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", meta.description);
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", `https://portfoliosaramarques.vercel.app${page === "not-found" ? window.location.pathname : PAGE_PATHS[page]}`);
+  }, [page]);
+
   const navigate = (p: Page) => {
     setPage(p);
-    window.history.pushState({}, "", pathFromPage(p));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const path = p === "not-found" ? window.location.pathname : PAGE_PATHS[p];
+    if (window.location.pathname !== path) window.history.pushState({}, "", path);
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   return (
@@ -857,6 +937,7 @@ export default function App() {
             {(session) => <Admin session={session} />}
           </ProtectedRoute>
         )}
+        {page === "not-found" && <NotFoundPage onNav={navigate} />}
       </div>
 
       {page !== "login" && page !== "admin" && <Footer onNav={navigate} />}

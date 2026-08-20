@@ -35,7 +35,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!loading && (!session || !isAdminEmail(session.user.email))) {
-      window.history.replaceState({}, "", "/login");
+      window.history.replaceState({}, "", session ? "/login" : "/login?reason=session-expired");
       window.dispatchEvent(new PopStateEvent("popstate"));
     }
   }, [loading, session]);
