@@ -1,4 +1,4 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import {
   createUploadSignature,
   getR2Client,
@@ -47,21 +47,21 @@ export default async function handler(request, response) {
     const config = getR2Config();
     const client = getR2Client();
 
-    await client.send(
-      new DeleteObjectCommand({
-        Bucket: config.bucket,
-        Key: key,
-      })
-    );
+    let metadata = {};
+    try {
+      const metadataResult = await client.send(new GetObjectCommand({ Bucket: config.bucket, Key: `${key}.metadata.json` }));
+      metadata = JSON.parse(await metadataResult.Body.transformToString());
+    } catch {
+      metadata = {};
+    }
+    const variantKeys = Object.values(metadata.variants || {}).map(normalizeObjectKey).filter((variantKey) => variantKey !== key);
+    const keys = [...new Set([key, `${key}.metadata.json`, ...variantKeys])];
+    await client.send(new DeleteObjectsCommand({
+      Bucket: config.bucket,
+      Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+    }));
 
-    await client.send(
-      new DeleteObjectCommand({
-        Bucket: config.bucket,
-        Key: `${key}.metadata.json`,
-      })
-    );
-
-    response.status(200).json({ ok: true });
+    response.status(200).json({ ok: true, deleted: keys });
   } catch (error) {
     handleApiError(response, error);
   }

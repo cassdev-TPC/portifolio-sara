@@ -170,9 +170,13 @@ export default {
 
       if (request.method === "DELETE") {
         const key = await verifySignature(url, env.UPLOAD_SECRET);
-        await env.GALERIA.delete(key);
-        await env.GALERIA.delete(metadataKey(key));
-        return json({ ok: true, key });
+        const metadata = await readMetadata(env, key);
+        const variantKeys = Object.values(metadata.variants || {})
+          .map((variantKey) => normalizeKey(variantKey))
+          .filter((variantKey) => variantKey !== key);
+        const keys = [...new Set([key, metadataKey(key), ...variantKeys])];
+        await env.GALERIA.delete(keys);
+        return json({ ok: true, key, deleted: keys });
       }
 
       if (request.method === "PUT" && url.pathname === "/metadata") {
