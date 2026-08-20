@@ -46,6 +46,8 @@ function normalizeGalleryCategory(kind, category) {
       retratos: "Retrato",
       ensaio: "Ensaios",
       ensaios: "Ensaios",
+      "pre wedding": "Pré Wedding",
+      "pre-wedding": "Pré Wedding",
       evento: "Eventos",
       eventos: "Eventos",
     };

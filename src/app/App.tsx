@@ -789,7 +789,7 @@ function ContactPage() {
               {[
                 { label: "WhatsApp", value: "+55 18 99618-8589", href: whatsappUrl },
                 { label: "E-mail", value: "smarquesmedia@gmail.com", href: "mailto:smarquesmedia@gmail.com" },
-                { label: "Instagram", value: "@smarques.media", href: "https://instagram.com/smarques.media" },
+                { label: "Instagram", value: "@smarques.midia", href: "https://instagram.com/smarques.midia" },
                 { label: "Instagram pessoal", value: "@eusahmarques", href: "https://instagram.com/eusahmarques" },
                 { label: "Nome", value: "Sara Marques" },
               ].map((item) => (
@@ -845,7 +845,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>smarquesmedia@gmail.com</li>
             <li>+55 18 99618-8589</li>
-            <li>@smarques.media</li>
+            <li>@smarques.midia</li>
             <li>@eusahmarques</li>
           </ul>
         </div>
@@ -864,7 +864,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
           </AppLink>
         </p>
         <p className="text-xs text-muted-foreground hidden sm:block" style={{ fontFamily: "DM Mono, monospace" }}>
-          @smarques.media
+          @smarques.midia
         </p>
       </div>
     </footer>

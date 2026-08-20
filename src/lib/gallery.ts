@@ -27,7 +27,7 @@ export type GalleryItem = {
 export type UploadProgress = { stage: string; percent: number };
 export type UploadOptions = { description?: string; onProgress?: (progress: UploadProgress) => void };
 
-export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Eventos", "Produtos"];
+export const DEFAULT_PHOTO_CATEGORIES = ["Todos", "Retrato", "Ensaios", "Pré Wedding", "Eventos", "Produtos"];
 export const DEFAULT_VIDEO_CATEGORIES = [
   "Serviços e Produtos",
   "Imobiliário",
@@ -87,6 +87,8 @@ export function normalizeGalleryCategory(kind: GalleryKind, category: string) {
       ensaios: "Ensaios",
       bastidor: "Ensaios",
       bastidores: "Ensaios",
+      "pre wedding": "Pré Wedding",
+      "pre-wedding": "Pré Wedding",
       evento: "Eventos",
       eventos: "Eventos",
     };
