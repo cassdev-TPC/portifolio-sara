@@ -40,7 +40,7 @@ export default async function handler(request, response) {
         throw new Error(workerData.error || `Worker delete falhou com status ${workerResponse.status}.`);
       }
 
-      response.status(200).json({ ok: true });
+      response.status(200).json({ ok: true, deleted: workerData.deleted || [key] });
       return;
     }
 

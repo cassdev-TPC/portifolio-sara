@@ -176,6 +176,17 @@ export default {
           .filter((variantKey) => variantKey !== key);
         const keys = [...new Set([key, metadataKey(key), ...variantKeys])];
         await env.GALERIA.delete(keys);
+        const remainingKeys = (
+          await Promise.all(keys.map(async (candidateKey) => ({
+            key: candidateKey,
+            exists: Boolean(await env.GALERIA.head(candidateKey)),
+          })))
+        ).filter((candidate) => candidate.exists).map((candidate) => candidate.key);
+
+        if (remainingKeys.length > 0) {
+          throw new Error(`Falha ao excluir completamente: ${remainingKeys.join(", ")}`);
+        }
+
         return json({ ok: true, key, deleted: keys });
       }
 

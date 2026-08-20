@@ -88,9 +88,9 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
 
     try {
       await deleteGalleryItem(path);
-      setItems((current) => current.filter((item) => item.path !== path));
-    } catch {
-      setError("Não foi possível excluir este arquivo.");
+      await loadItems();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir este arquivo.");
     } finally {
       setDeleting("");
     }

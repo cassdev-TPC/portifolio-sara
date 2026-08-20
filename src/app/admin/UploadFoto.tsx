@@ -41,6 +41,7 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
 
     let uploadedCount = 0;
     const failures: File[] = [];
+    const failureMessages: string[] = [];
 
     try {
       setLoading(true);
@@ -59,12 +60,17 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
             onProgress: ({ stage, percent }) => { setMessage(`${stage}: ${selectedFile.name}`); setProgress(percent); },
           });
           uploadedCount += 1;
-        } catch {
+        } catch (uploadError) {
           failures.push(selectedFile);
+          failureMessages.push(`${selectedFile.name}: ${getErrorMessage(uploadError)}`);
         }
       }
       setFailed(failures);
-      setError(failures.length ? `${failures.length} foto${failures.length > 1 ? "s falharam" : " falhou"}. Você pode tentar novamente somente essas.` : "");
+      setError(
+        failures.length
+          ? `${failures.length} foto${failures.length > 1 ? "s falharam" : " falhou"}. ${failureMessages.join(" ")} Você pode tentar novamente somente essas.`
+          : ""
+      );
       setMessage(`${uploadedCount} foto${uploadedCount === 1 ? " enviada" : "s enviadas"} com sucesso.`);
       setFiles(failures);
       setCategory(DEFAULT_PHOTO_CATEGORIES[1] ?? "Retrato");
