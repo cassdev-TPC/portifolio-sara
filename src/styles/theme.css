@@ -132,11 +132,22 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    margin: 0;
+    min-width: 0;
+    overflow-x: clip;
   }
 
   html {
     font-size: var(--font-size);
+    min-width: 0;
+    overflow-x: clip;
+    scroll-padding-top: 8rem;
   }
+
+  #root { min-height: 100%; min-width: 0; }
+  img, video { max-width: 100%; }
+  p, h1, h2, h3, a, button { overflow-wrap: anywhere; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
   h1, h2, h3 {
     font-family: 'DM Serif Display', serif;
@@ -235,6 +246,16 @@
       transform: none;
       transition: none;
     }
+  }
+
+  @supports (padding: env(safe-area-inset-top)) {
+    nav { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    footer { padding-bottom: env(safe-area-inset-bottom); }
+  }
+
+  @media (max-width: 359px) {
+    h1 { hyphens: auto; }
+    .btn-modern { max-width: 100%; }
   }
 
 }

@@ -74,7 +74,7 @@ function categoryKey(category: string) {
     .trim();
 }
 
-function normalizeGalleryCategory(kind: GalleryKind, category: string) {
+export function normalizeGalleryCategory(kind: GalleryKind, category: string) {
   const key = categoryKey(category);
 
   if (kind === "photos") {
@@ -91,7 +91,9 @@ function normalizeGalleryCategory(kind: GalleryKind, category: string) {
       eventos: "Eventos",
     };
 
-    return aliases[key] ?? "Ensaios";
+    const normalized = aliases[key];
+    if (!normalized) throw new Error(`Categoria de foto inválida: ${category || "vazia"}.`);
+    return normalized;
   }
 
   const aliases: Record<string, string> = {
@@ -115,7 +117,13 @@ function normalizeGalleryCategory(kind: GalleryKind, category: string) {
     gastronomia: "Gastronomia",
   };
 
-  return aliases[key] ?? "Serviços e Produtos";
+  const normalized = aliases[key];
+  if (!normalized) throw new Error(`Categoria de vídeo inválida: ${category || "vazia"}.`);
+  return normalized;
+}
+
+export function validateGalleryCategory(kind: GalleryKind, category: string) {
+  return normalizeGalleryCategory(kind, category);
 }
 
 export function getCategories(_items: { category: string }[], defaults: string[]) {
@@ -147,7 +155,11 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
 
 async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
   const data = await requestR2Json<{ items: GalleryItem[] }>(`/api/r2/list?kind=${kind}`);
-  return data.items;
+  return data.items.map((item) => {
+    const parts = item.path.split("/");
+    const slug = parts[0] === "originals" ? parts[2] : parts[1];
+    return { ...item, category: slug ? normalizeGalleryCategory(kind, categoryFromSlug(slug)) : item.category };
+  });
 }
 
 async function signR2Upload(kind: GalleryKind, file: File, category: string, variant: string, token: string) {
@@ -178,13 +190,14 @@ export async function uploadProcessedGalleryItem(
   options: UploadOptions = {}
 ) {
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
+  const normalizedCategory = validateGalleryCategory(kind, category);
 
   const token = await getAdminToken();
   if (!token) throw new Error("Faça login novamente para enviar arquivos.");
 
   const uploaded: Record<string, { key: string; url: string }> = {};
   for (const [index, entry] of files.entries()) {
-    const signed = await signR2Upload(kind, entry.file, category, entry.variant, token);
+    const signed = await signR2Upload(kind, entry.file, normalizedCategory, entry.variant, token);
     await putWithProgress(signed.uploadUrl, entry.file, (part) => options.onProgress?.({
       stage: `Enviando ${entry.variant}`,
       percent: Math.round(((index + part / 100) / files.length) * 100),

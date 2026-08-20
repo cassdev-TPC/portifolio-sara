@@ -50,7 +50,7 @@ function normalizeGalleryCategory(kind, category) {
       eventos: "Eventos",
     };
 
-    return aliases[key] ?? "Ensaios";
+    return aliases[key] ?? "Sem categoria";
   }
 
   const aliases = {
@@ -74,14 +74,14 @@ function normalizeGalleryCategory(kind, category) {
     gastronomia: "Gastronomia",
   };
 
-  return aliases[key] ?? "Serviços e Produtos";
+  return aliases[key] ?? "Sem categoria";
 }
 
 function mapObjectToItem(kind, object, publicUrl) {
   const key = object.key || object.Key;
   const uploaded = object.uploaded || object.LastModified?.toISOString?.();
   const parts = key.split("/");
-  const categorySlug = parts[1] || "sem-categoria";
+  const categorySlug = (parts[0] === "originals" ? parts[2] : parts[1]) || "sem-categoria";
   const fileName = parts.at(-1) || key;
 
   return {

@@ -146,9 +146,10 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
           Essa descrição será aplicada em todos os vídeos selecionados neste envio.
         </span>
       </label>
-      {error ? <p className="text-sm text-accent">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}
-      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
+      <div aria-live="polite">{error ? <p className="text-sm text-destructive">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}</div>
+      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso do envio" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
       <button
+        type="submit"
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
         disabled={loading}
       >

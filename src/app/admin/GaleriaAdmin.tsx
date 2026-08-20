@@ -82,6 +82,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
   }, [kind, refreshKey]);
 
   const remove = async (path: string) => {
+    if (!window.confirm("Excluir somente este arquivo e suas versões derivadas? Esta ação não pode ser desfeita.")) return;
     setDeleting(path);
     setError("");
 
@@ -128,7 +129,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
         </div>
       </div>
 
-      {error && <p className="text-sm text-accent mb-4">{error}</p>}
+      {error && <p className="text-sm text-destructive mb-4" role="alert">{error}</p>}
 
       {!loading && items.length === 0 && (
         <p className="text-sm text-muted-foreground">Nenhum arquivo cadastrado.</p>
