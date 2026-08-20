@@ -84,7 +84,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   };
 
   return (
-    <form onSubmit={submit} className="bg-card border border-border p-5 md:p-6 space-y-4 rounded-2xl">
+    <form onSubmit={submit} className="min-w-0 w-full bg-card border border-border p-5 md:p-6 space-y-4 rounded-2xl">
       <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar vídeos</h2>
       <label className="flex flex-col gap-2 text-sm">
         <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivos</span>
@@ -101,7 +101,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setError("");
             if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
           }}
-          className="border border-border bg-background px-3 py-2 text-sm rounded-xl"
+          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
         />
         {files.length > 0 && (
           <span className="text-xs text-muted-foreground">
@@ -121,7 +121,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setMessage("");
             setError("");
           }}
-          className="border border-border bg-background px-3 py-2 text-sm rounded-xl"
+          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
         >
           {DEFAULT_VIDEO_CATEGORIES.filter((cat) => cat !== "Todos").map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
@@ -140,7 +140,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
           rows={4}
           maxLength={240}
           placeholder="Escreva uma descrição curta para aparecer na galeria."
-          className="border border-border bg-background px-3 py-2 text-sm resize-y rounded-xl"
+          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm resize-y rounded-xl"
         />
         <span className="text-xs text-muted-foreground">
           Essa descrição será aplicada em todos os vídeos selecionados neste envio.

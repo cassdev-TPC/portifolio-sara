@@ -74,7 +74,7 @@ export default function Admin({ session }: AdminProps) {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-[360px_1fr] gap-6 items-start">
+        <div className="grid min-w-0 gap-6 items-start lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
           {tab === "photos" ? <UploadFoto onUploaded={refresh} /> : <UploadVideo onUploaded={refresh} />}
           <GaleriaAdmin kind={tab} refreshKey={refreshKey} />
         </div>

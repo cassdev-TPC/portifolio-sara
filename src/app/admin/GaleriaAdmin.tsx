@@ -116,7 +116,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
   };
 
   return (
-    <section className="bg-card border border-border p-5 md:p-6 rounded-2xl">
+    <section className="min-w-0 w-full bg-card border border-border p-5 md:p-6 rounded-2xl">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
         <div>
           <p className="text-xs tracking-widest uppercase text-accent mb-2" style={{ fontFamily: "DM Mono, monospace" }}>
@@ -137,7 +137,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
 
       <div className="space-y-8">
         {groupedItems.map((group) => (
-          <div key={group.category} className="rounded-2xl border border-border bg-background/55 p-4 md:p-5">
+          <div key={group.category} className="min-w-0 rounded-2xl border border-border bg-background/55 p-4 md:p-5">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-lg font-semibold">{group.category}</h3>
               <span className="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
@@ -145,9 +145,9 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
               </span>
             </div>
 
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid min-w-0 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {group.items.map((item) => (
-                <article key={item.path} className="border border-border bg-card overflow-hidden rounded-2xl">
+                <article key={item.path} className="min-w-0 border border-border bg-card overflow-hidden rounded-2xl">
                   <div className="relative aspect-video bg-muted">
                     {kind === "photos" ? (
                       <img src={item.thumbnailUrl || item.url} loading="lazy" alt={item.description || item.category} className="w-full h-full object-cover" />
@@ -186,7 +186,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
                         rows={3}
                         maxLength={240}
                         placeholder="Adicione uma descrição para esta mídia."
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y"
+                        className="w-full min-w-0 max-w-full rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y"
                       />
                     </label>
                     <button
