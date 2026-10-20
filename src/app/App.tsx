@@ -340,11 +340,11 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
       {/* Hero */}
       <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
         <picture>
-          <source media="(min-width: 768px)" srcSet="/assets/home-cover-sara-horizontal.png" />
+          <source media="(min-width: 768px)" srcSet="/assets/home-cover-sara-camera.png" />
           <img
             src="/assets/home-cover-sara-banner.png"
-            alt="Sara Marques trabalhando em frente ao computador"
-            className="absolute inset-0 h-full w-full object-cover object-[58%_35%] scale-x-[1.05] translate-x-[1.5%] md:object-[50%_42%] md:scale-x-[1.07] md:translate-x-[2.5%]"
+            alt="Sara Marques"
+            className="absolute inset-0 h-full w-full object-cover object-[58%_35%] scale-x-[1.05] translate-x-[1.5%] md:left-[28%] md:w-[72%] md:object-center md:scale-x-100 md:translate-x-0 md:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
           />
         </picture>
         <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
