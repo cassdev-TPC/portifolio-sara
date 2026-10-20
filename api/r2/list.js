@@ -3,7 +3,7 @@ import {
   getR2Client,
   getR2Config,
   getR2PublicUrl,
-  getWorkerUploadConfig,
+  
   handleApiError,
   parseKind,
   sendMethodNotAllowed,
@@ -114,10 +114,10 @@ export default async function handler(request, response) {
   try {
     const kind = parseKind(request.query.kind);
     const publicUrl = getR2PublicUrl();
-    const workerConfig = getWorkerUploadConfig();
+    const workerUrl = process.env.R2_WORKER_URL?.trim();
 
-    if (workerConfig) {
-      const listUrl = new URL("/list", workerConfig.workerUrl);
+    if (workerUrl) {
+      const listUrl = new URL("/list", workerUrl);
       listUrl.searchParams.set("kind", kind);
 
       const workerResponse = await fetch(listUrl);
