@@ -77,6 +77,4 @@ export const server = createServer(async (req, res) => {
   }
 });
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  server.listen(Number(process.env.PORT || 3000), '0.0.0.0', () => console.log('Servidor iniciado.'));
-}
+server.listen(Number(process.env.PORT || 3000), '0.0.0.0', () => console.log('Servidor iniciado.'));
