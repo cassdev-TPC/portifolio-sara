@@ -17,6 +17,7 @@ import {
   type GallerySort,
   listGalleryPage,
   listGalleryItems,
+  retryMediaFromFallback,
 } from "../lib/gallery";
 
 const SERVICES = [
@@ -206,9 +207,10 @@ export function Lightbox({
             <div className="rounded-xl border border-white/30 bg-white/10 p-6 text-center text-white" role="status">Não foi possível exibir esta foto.</div>
           ) : (
             <img
+              key={photo.id}
               src={photo.optimizedUrl || photo.url}
               alt={mediaDescription(photo, "photos")}
-              onError={() => setImageError(true)}
+              onError={(event) => { if (!retryMediaFromFallback(event.currentTarget)) setImageError(true); }}
               className="block h-auto w-auto max-h-full max-w-full object-contain"
             />
           )}
@@ -240,13 +242,13 @@ export function Lightbox({
 }
 
 function VideoPreview({ video }: { video: GalleryItem }) {
-  return video.posterUrl ? <img src={video.posterUrl} alt={mediaDescription(video, "videos")} loading="lazy" width={video.width} height={video.height} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-4 text-center text-sm text-muted-foreground">Capa indisponível</div>;
+  return video.posterUrl ? <img src={video.posterUrl} alt={mediaDescription(video, "videos")} onError={(event) => retryMediaFromFallback(event.currentTarget)} loading="lazy" width={video.width} height={video.height} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-4 text-center text-sm text-muted-foreground">Capa indisponível</div>;
 }
 
 function PhotoThumbnail({ photo, eager }: { photo: GalleryItem; eager: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <div className="flex min-h-48 w-full items-center justify-center bg-muted p-5 text-center text-sm text-muted-foreground" role="status">Foto indisponível</div>;
-  return <img src={photo.thumbnailUrl || photo.url} alt={mediaDescription(photo, "photos")} onError={() => setFailed(true)} width={photo.width} height={photo.height} className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading={eager ? "eager" : "lazy"} />;
+  return <img src={photo.thumbnailUrl || photo.url} alt={mediaDescription(photo, "photos")} onError={(event) => { if (!retryMediaFromFallback(event.currentTarget)) setFailed(true); }} width={photo.width} height={photo.height} className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading={eager ? "eager" : "lazy"} />;
 }
 
 // Navbar
@@ -746,7 +748,12 @@ function VideosPage() {
                     preload="none"
                     autoPlay
                     aria-label={mediaDescription(v, "videos")}
-                    onError={() => {
+                    onError={(event) => {
+                      if (retryMediaFromFallback(event.currentTarget)) {
+                        event.currentTarget.load();
+                        void event.currentTarget.play().catch(() => {});
+                        return;
+                      }
                       setActive(null);
                       setPlaybackErrors((current) => ({ ...current, [v.id]: "Este formato não é compatível com o seu navegador. O arquivo original permanece preservado." }));
                     }}

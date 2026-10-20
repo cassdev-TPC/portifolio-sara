@@ -9,6 +9,7 @@ import {
   type GalleryKind,
   type GallerySort,
   listGalleryPage,
+  retryMediaFromFallback,
   updateGalleryItemDescription,
 } from "../../lib/gallery";
 
@@ -206,9 +207,9 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
                 <article key={item.path} className="min-w-0 border border-border bg-card overflow-hidden rounded-2xl">
                   <div className="relative aspect-video bg-muted">
                     {kind === "photos" ? (
-                      <img src={item.thumbnailUrl || item.url} loading="lazy" alt={item.description || item.category} className="w-full h-full object-cover" />
+                      <img src={item.thumbnailUrl || item.url} onError={(event) => retryMediaFromFallback(event.currentTarget)} loading="lazy" alt={item.description || item.category} className="w-full h-full object-cover" />
                     ) : (
-                      item.posterUrl ? <img src={item.posterUrl} loading="lazy" alt={`Capa: ${item.description || item.category}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />
+                      item.posterUrl ? <img src={item.posterUrl} onError={(event) => retryMediaFromFallback(event.currentTarget)} loading="lazy" alt={`Capa: ${item.description || item.category}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />
                     )}
                     <button
                       type="button"

@@ -7,7 +7,18 @@ export type GalleryPage = { items: GalleryItem[]; total: number };
 export const GALLERY_PAGE_SIZE = 12;
 
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL?.replace(/\/$/, "") ?? "";
+// Keep the previous public endpoint available while DNS caches learn the media domain.
+const R2_FALLBACK_URL = "https://pub-a324c717811d497b9c1237129c84ffbd.r2.dev";
 const isR2Configured = Boolean(R2_PUBLIC_URL);
+
+export function retryMediaFromFallback(element: HTMLImageElement | HTMLVideoElement, publicUrl = R2_PUBLIC_URL): boolean {
+  const currentUrl = element.currentSrc || element.src;
+  const prefix = `${publicUrl}/`;
+  if (!publicUrl || !currentUrl.startsWith(prefix) || element.dataset.r2FallbackAttempted) return false;
+  element.dataset.r2FallbackAttempted = "true";
+  element.src = `${R2_FALLBACK_URL}/${currentUrl.slice(prefix.length)}`;
+  return true;
+}
 
 export type GalleryItem = {
   id: string;

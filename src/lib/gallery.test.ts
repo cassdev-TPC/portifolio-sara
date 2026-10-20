@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PHOTO_CATEGORIES, DEFAULT_VIDEO_CATEGORIES, getCategories, normalizeGalleryCategory, validateGalleryCategory } from "./gallery";
+import { DEFAULT_PHOTO_CATEGORIES, DEFAULT_VIDEO_CATEGORIES, getCategories, normalizeGalleryCategory, retryMediaFromFallback, validateGalleryCategory } from "./gallery";
 
 describe("categorias", () => {
   it("preserva a ordem dos filtros", () => {
@@ -14,5 +14,16 @@ describe("categorias", () => {
   it("rejeita categoria desconhecida sem fallback silencioso", () => {
     expect(() => validateGalleryCategory("photos", "qualquer coisa")).toThrow("inválida");
     expect(() => validateGalleryCategory("videos", "qualquer coisa")).toThrow("inválida");
+  });
+});
+
+describe("fallback de mídia durante propagação DNS", () => {
+  it("tenta o mesmo objeto no endereço anterior apenas uma vez", () => {
+    const image = document.createElement("img");
+    image.src = "https://midia.base4systems.com.br/thumbnails/photos/retrato/foto.webp";
+
+    expect(retryMediaFromFallback(image, "https://midia.base4systems.com.br")).toBe(true);
+    expect(image.src).toBe("https://pub-a324c717811d497b9c1237129c84ffbd.r2.dev/thumbnails/photos/retrato/foto.webp");
+    expect(retryMediaFromFallback(image, "https://midia.base4systems.com.br")).toBe(false);
   });
 });
