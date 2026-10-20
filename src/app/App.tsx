@@ -339,12 +339,15 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
     <main className="page-enter pt-28 md:pt-16">
       {/* Hero */}
       <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
-        <img
-          src="/assets/home-cover-sara-banner.png"
-          alt="Sara Marques trabalhando em frente ao computador"
-          className="absolute inset-0 h-full w-full object-cover object-[58%_35%]"
-        />
-        <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
+        <picture>
+          <source media="(min-width: 768px)" srcSet="/assets/home-cover-sara-horizontal.png" />
+          <img
+            src="/assets/home-cover-sara-banner.png"
+            alt="Sara Marques trabalhando em frente ao computador"
+            className="absolute inset-0 h-full w-full object-cover object-[58%_35%] scale-x-[1.05] translate-x-[1.5%] md:object-[50%_42%] md:scale-x-[1.07] md:translate-x-[2.5%]"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
         <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
 
         <div className="reveal-on-scroll relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
