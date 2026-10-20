@@ -243,6 +243,24 @@ function putWithProgress(url: string, file: File, onProgress?: (percent: number)
   });
 }
 
+async function putViaHostinger(key: string, file: File, token: string, onProgress?: (percent: number) => void) {
+  const response = await new Promise<XMLHttpRequest>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", `/api/r2/upload?key=${encodeURIComponent(key)}`);
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.upload.onprogress = (event) => event.lengthComputable && onProgress?.(Math.round(event.loaded / event.total * 100));
+    xhr.onerror = () => reject(new Error("A conexão com a Hostinger foi interrompida durante o upload."));
+    xhr.onload = () => resolve(xhr);
+    xhr.send(file);
+  });
+  if (response.status < 200 || response.status >= 300) {
+    let message = `Falha no envio alternativo. Status ${response.status}.`;
+    try { message = JSON.parse(response.responseText)?.error || message; } catch { /* Keep HTTP status. */ }
+    throw new Error(message);
+  }
+}
+
 export async function uploadProcessedGalleryItem(
   kind: GalleryKind,
   category: string,
@@ -259,10 +277,17 @@ export async function uploadProcessedGalleryItem(
   const uploaded: Record<string, { key: string; url: string }> = {};
   for (const [index, entry] of files.entries()) {
     const signed = await signR2Upload(kind, entry.file, normalizedCategory, entry.variant, token);
-    await putWithProgress(signed.uploadUrl, entry.file, (part) => options.onProgress?.({
-      stage: `Enviando ${entry.variant}`,
+    const reportProgress = (stage: string, part: number) => options.onProgress?.({
+      stage,
       percent: Math.round(((index + part / 100) / files.length) * 100),
-    }));
+    });
+    try {
+      await putWithProgress(signed.uploadUrl, entry.file, (part) => reportProgress(`Enviando ${entry.variant}`, part));
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "A conexão foi interrompida durante o upload." || entry.file.size > 32 * 1024 * 1024) throw error;
+      reportProgress(`Reenviando ${entry.variant} pela Hostinger`, 0);
+      await putViaHostinger(signed.key, entry.file, token, (part) => reportProgress(`Reenviando ${entry.variant} pela Hostinger`, part));
+    }
     uploaded[entry.variant] = { key: signed.key, url: signed.publicUrl };
   }
   const original = uploaded.original ?? uploaded.legacy;
