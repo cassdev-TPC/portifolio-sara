@@ -156,12 +156,33 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
 }
 
 async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
-  const data = await requestR2Json<{ items: GalleryItem[] }>(`/api/r2/list?kind=${kind}`);
-  return data.items.map((item) => {
-    const parts = item.path.split("/");
-    const slug = parts[0] === "originals" ? parts[2] : parts[1];
-    return { ...item, category: slug ? normalizeGalleryCategory(kind, categoryFromSlug(slug)) : item.category };
-  });
+  if (!isSupabaseConfigured) throw new Error("Catálogo Supabase não configurado.");
+  const { data, error } = await supabase
+    .from("gallery_media")
+    .select("id,name,original_path,optimized_path,thumbnail_path,poster_path,category,description,created_at,width,height,duration,status")
+    .eq("kind", kind)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true });
+  if (error) throw error;
+
+  const mediaUrl = (path: string | null) => path ? `${R2_PUBLIC_URL}/${path}` : undefined;
+  return (data ?? []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    path: item.original_path,
+    url: mediaUrl(item.optimized_path || item.original_path)!,
+    originalUrl: mediaUrl(item.original_path),
+    optimizedUrl: mediaUrl(item.optimized_path || item.original_path),
+    thumbnailUrl: mediaUrl(item.thumbnail_path || item.poster_path || item.original_path),
+    posterUrl: mediaUrl(item.poster_path),
+    category: item.category,
+    description: item.description,
+    createdAt: item.created_at ?? undefined,
+    width: item.width ?? undefined,
+    height: item.height ?? undefined,
+    duration: item.duration ?? undefined,
+    status: item.status,
+  }));
 }
 
 async function signR2Upload(kind: GalleryKind, file: File, category: string, variant: string, token: string) {
@@ -213,6 +234,23 @@ export async function uploadProcessedGalleryItem(
     variants: Object.fromEntries(Object.entries(uploaded).map(([variant, value]) => [variant, value.key])),
     status: "ready",
   });
+  const { error: catalogError } = await supabase.from("gallery_media").upsert({
+    id: original.key,
+    kind,
+    name: titleFromFileName(original.key.split("/").at(-1) || original.key),
+    original_path: original.key,
+    optimized_path: uploaded.optimized?.key ?? original.key,
+    thumbnail_path: uploaded.thumbnail?.key ?? uploaded.poster?.key ?? original.key,
+    poster_path: uploaded.poster?.key ?? null,
+    category: normalizedCategory,
+    description: options.description ?? "",
+    width: typeof metadata.width === "number" ? metadata.width : null,
+    height: typeof metadata.height === "number" ? metadata.height : null,
+    duration: typeof metadata.duration === "number" ? metadata.duration : null,
+    status: "ready",
+    created_at: new Date().toISOString(),
+  });
+  if (catalogError) throw new Error(`Arquivos enviados, mas falha ao registrar no catálogo: ${catalogError.message}`);
   options.onProgress?.({ stage: "Concluído", percent: 100 });
   return original.key;
 }
@@ -231,10 +269,31 @@ async function deleteR2GalleryItem(path: string) {
     },
     body: JSON.stringify({ path }),
   });
+  const { error } = await supabase.from("gallery_media").delete().eq("id", path);
+  if (error) throw new Error(`Arquivo excluído, mas falha ao atualizar o catálogo: ${error.message}`);
 }
 
 async function updateR2GalleryItemDescription(path: string, description: string) {
-  return updateR2GalleryItemMetadata(path, description, {});
+  const { data: item, error: readError } = await supabase.from("gallery_media")
+    .select("original_path,optimized_path,thumbnail_path,poster_path,width,height,duration,status")
+    .eq("id", path)
+    .single();
+  if (readError || !item) throw new Error(`Item não encontrado no catálogo: ${readError?.message || path}`);
+  const variants = {
+    original: item.original_path,
+    ...(item.optimized_path && item.optimized_path !== item.original_path ? { optimized: item.optimized_path } : {}),
+    ...(item.thumbnail_path && item.thumbnail_path !== item.original_path ? { thumbnail: item.thumbnail_path } : {}),
+    ...(item.poster_path ? { poster: item.poster_path } : {}),
+  };
+  await updateR2GalleryItemMetadata(path, description, {
+    variants,
+    width: item.width,
+    height: item.height,
+    duration: item.duration,
+    status: item.status,
+  });
+  const { error } = await supabase.from("gallery_media").update({ description, updated_at: new Date().toISOString() }).eq("id", path);
+  if (error) throw new Error(`Descrição salva no R2, mas falha ao atualizar o catálogo: ${error.message}`);
 }
 
 async function updateR2GalleryItemMetadata(path: string, description: string, metadata: Record<string, unknown>) {
