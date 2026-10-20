@@ -912,7 +912,7 @@ export default function App() {
     document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", meta.description);
     document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", meta.title);
     document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", meta.description);
-    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", `https://portfoliosaramarques.vercel.app${page === "not-found" ? window.location.pathname : PAGE_PATHS[page]}`);
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", `${import.meta.env.VITE_SITE_URL || window.location.origin}${page === "not-found" ? window.location.pathname : PAGE_PATHS[page]}`);
   }, [page]);
 
   const navigate = (p: Page) => {
