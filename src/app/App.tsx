@@ -338,15 +338,14 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <main className="page-enter pt-28 md:pt-16">
       {/* Hero */}
-      <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-[#100b14] text-white">
+      <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
         <img
           src="/assets/home-cover-sara-banner.png"
           alt="Sara Marques trabalhando em frente ao computador"
-          className="absolute inset-0 h-full w-full object-cover object-[58%_35%] md:object-contain md:object-right-bottom"
+          className="absolute inset-0 h-full w-full object-cover object-[58%_35%]"
         />
-        <div className="absolute inset-0 bg-black/65 md:bg-transparent" aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
         <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
-        <div className="pointer-events-none absolute inset-0 hidden md:block" style={{ background: "linear-gradient(to right, #100b14 70%, transparent 93%)" }} aria-hidden="true" />
 
         <div className="reveal-on-scroll relative w-full max-w-6xl mx-auto px-5 sm:px-8 md:px-16 lg:px-20 py-20 md:py-28">
           <div className="max-w-3xl">
