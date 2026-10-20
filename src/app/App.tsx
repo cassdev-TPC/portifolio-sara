@@ -339,14 +339,11 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
     <main className="page-enter pt-28 md:pt-16">
       {/* Hero */}
       <section className="relative flex min-h-[calc(100svh-7rem)] md:min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-black text-white">
-        <picture>
-          <source media="(min-width: 768px)" srcSet="/assets/home-cover-sara-camera.png" />
-          <img
-            src="/assets/home-cover-sara-banner.png"
-            alt="Sara Marques"
-            className="absolute inset-0 h-full w-full object-cover object-[58%_35%] scale-x-[1.05] translate-x-[1.5%] md:left-[28%] md:w-[72%] md:object-center md:scale-x-100 md:translate-x-0 md:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
-          />
-        </picture>
+        <img
+          src="/assets/home-cover-sara-camera.png"
+          alt="Sara Marques"
+          className="absolute inset-0 h-full w-full object-cover object-[48%_50%] md:left-[28%] md:w-[72%] md:object-center md:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
+        />
         <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
         <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/80 via-black/45 to-transparent" aria-hidden="true" />
 
