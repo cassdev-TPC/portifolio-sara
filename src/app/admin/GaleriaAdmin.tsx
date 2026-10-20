@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Save, X } from "lucide-react";
 import {
   DEFAULT_PHOTO_CATEGORIES,
   DEFAULT_VIDEO_CATEGORIES,
+  GALLERY_PAGE_SIZE,
   deleteGalleryItem,
   type GalleryItem,
   type GalleryKind,
-  listGalleryItems,
+  type GallerySort,
+  listGalleryPage,
   updateGalleryItemDescription,
 } from "../../lib/gallery";
 
@@ -43,44 +45,82 @@ function groupItems(items: GalleryItem[], orderedCategories: string[]) {
   return Array.from(grouped.entries())
     .map(([category, categoryItems]) => ({
       category,
-      items: categoryItems.sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? ""))),
+      items: categoryItems,
     }))
     .filter((group) => group.items.length > 0);
 }
 
 export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
+  const [category, setCategory] = useState("Todos");
+  const [sort, setSort] = useState<GallerySort>("newest");
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState("");
   const [saving, setSaving] = useState("");
   const [pendingDelete, setPendingDelete] = useState<GalleryItem | null>(null);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
+  const requestId = useRef(0);
+  const morePending = useRef(false);
 
   const title = kind === "photos" ? "Fotos cadastradas" : "Vídeos cadastrados";
   const orderedCategories = kind === "photos" ? DEFAULT_PHOTO_CATEGORIES : DEFAULT_VIDEO_CATEGORIES;
   const groupedItems = useMemo(() => groupItems(items, orderedCategories), [items, orderedCategories]);
 
-  const loadItems = async () => {
+  const loadItems = async (limit = GALLERY_PAGE_SIZE) => {
+    const currentRequest = ++requestId.current;
+    morePending.current = false;
     setLoading(true);
+    setLoadingMore(false);
     setError("");
 
     try {
-      const nextItems = await listGalleryItems(kind);
-      setItems(nextItems);
+      const page = await listGalleryPage(kind, { category, sort, limit });
+      if (currentRequest !== requestId.current) return;
+      setItems(page.items);
+      setTotal(page.total);
       setDescriptions(
-        Object.fromEntries(nextItems.map((item) => [item.path, item.description ?? ""]))
+        Object.fromEntries(page.items.map((item) => [item.path, item.description ?? ""]))
       );
     } catch {
-      setError("Não foi possível carregar a galeria.");
+      if (currentRequest === requestId.current) setError("Não foi possível carregar a galeria.");
     } finally {
-      setLoading(false);
+      if (currentRequest === requestId.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadItems();
-  }, [kind, refreshKey]);
+    setItems([]);
+    setTotal(0);
+    setDescriptions({});
+    void loadItems();
+    return () => { requestId.current++; };
+  }, [kind, refreshKey, category, sort]);
+
+  const loadMore = async () => {
+    if (loading || morePending.current || items.length >= total) return;
+    morePending.current = true;
+    setLoadingMore(true);
+    setError("");
+    const currentRequest = requestId.current;
+    try {
+      const page = await listGalleryPage(kind, { category, sort, offset: items.length });
+      if (currentRequest !== requestId.current) return;
+      const added = page.items.filter((item) => !items.some((loaded) => loaded.id === item.id));
+      setItems((current) => [...current, ...added]);
+      setDescriptions((current) => ({ ...current, ...Object.fromEntries(added.map((item) => [item.path, item.description ?? ""])) }));
+      setTotal(page.total);
+    } catch {
+      if (currentRequest === requestId.current) setError("Não foi possível carregar mais arquivos.");
+    } finally {
+      if (currentRequest === requestId.current) {
+        morePending.current = false;
+        setLoadingMore(false);
+      }
+    }
+  };
 
   const remove = async (path: string) => {
     setDeleting(path);
@@ -88,7 +128,7 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
 
     try {
       await deleteGalleryItem(path);
-      await loadItems();
+      await loadItems(Math.min(1000, Math.max(GALLERY_PAGE_SIZE, items.length)));
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir este arquivo.");
     } finally {
@@ -125,13 +165,29 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
           <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>{title}</h2>
         </div>
         <div className="text-sm text-muted-foreground">
-          {loading ? "Carregando..." : `${items.length} arquivo${items.length === 1 ? "" : "s"} no total`}
+          {loading && items.length === 0 ? "Carregando..." : `${total} arquivo${total === 1 ? "" : "s"} ${category === "Todos" ? "no total" : "na categoria"} · ${items.length} exibido${items.length === 1 ? "" : "s"}`}
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          Categoria
+          <select value={category} onChange={(event) => setCategory(event.target.value)} className="min-h-11 rounded-xl border border-border bg-background px-3 text-foreground">
+            {["Todos", ...orderedCategories.filter((item) => item !== "Todos")].map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          Ordenar por
+          <select value={sort} onChange={(event) => setSort(event.target.value as GallerySort)} className="min-h-11 rounded-xl border border-border bg-background px-3 text-foreground">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigas</option>
+          </select>
+        </label>
       </div>
 
       {error && <p className="text-sm text-destructive mb-4" role="alert">{error}</p>}
 
-      {!loading && items.length === 0 && (
+      {!loading && items.length === 0 && !error && (
         <p className="text-sm text-muted-foreground">Nenhum arquivo cadastrado.</p>
       )}
 
@@ -206,6 +262,13 @@ export default function GaleriaAdmin({ kind, refreshKey }: GaleriaAdminProps) {
           </div>
         ))}
       </div>
+      {!loading && items.length < total && (
+        <div className="mt-8 text-center">
+          <button type="button" onClick={loadMore} disabled={loadingMore} className="min-h-11 rounded-full border border-border px-6 py-2 text-sm font-semibold hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
+            {loadingMore ? "Carregando..." : "Carregar mais"}
+          </button>
+        </div>
+      )}
       {pendingDelete && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 p-5" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-description">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">

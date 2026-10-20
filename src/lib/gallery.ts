@@ -2,6 +2,9 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const GALLERY_BUCKET = "galeria";
 export type GalleryKind = "photos" | "videos";
+export type GallerySort = "newest" | "oldest";
+export type GalleryPage = { items: GalleryItem[]; total: number };
+export const GALLERY_PAGE_SIZE = 12;
 
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL?.replace(/\/$/, "") ?? "";
 const isR2Configured = Boolean(R2_PUBLIC_URL);
@@ -155,18 +158,41 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
   return data as T;
 }
 
-async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
+export async function listGalleryPage(
+  kind: GalleryKind,
+  { category, sort = "newest", offset = 0, limit = GALLERY_PAGE_SIZE }: {
+    category?: string;
+    sort?: GallerySort;
+    offset?: number;
+    limit?: number;
+  } = {}
+): Promise<GalleryPage> {
+  if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 1000) {
+    throw new Error("Intervalo de galeria inválido.");
+  }
+  if (sort !== "newest" && sort !== "oldest") throw new Error("Ordenação inválida.");
+
+  if (!isR2Configured) {
+    const items = await listGalleryItems(kind);
+    const matching = category && category !== "Todos" ? items.filter((item) => item.category === category) : items;
+    matching.sort((a, b) => (sort === "newest" ? -1 : 1) * String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")) || a.id.localeCompare(b.id));
+    return { items: matching.slice(offset, offset + limit), total: matching.length };
+  }
+
   if (!isSupabaseConfigured) throw new Error("Catálogo Supabase não configurado.");
-  const { data, error } = await supabase
+  let query = supabase
     .from("gallery_media")
-    .select("id,name,original_path,optimized_path,thumbnail_path,poster_path,category,description,created_at,width,height,duration,status")
-    .eq("kind", kind)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: true });
+    .select("id,name,original_path,optimized_path,thumbnail_path,poster_path,category,description,created_at,width,height,duration,status", { count: "exact" })
+    .eq("kind", kind);
+  if (category && category !== "Todos") query = query.eq("category", category);
+  const { data, count, error } = await query
+    .order("created_at", { ascending: sort === "oldest" })
+    .order("id", { ascending: true })
+    .range(offset, offset + limit - 1);
   if (error) throw error;
 
   const mediaUrl = (path: string | null) => path ? `${R2_PUBLIC_URL}/${path}` : undefined;
-  return (data ?? []).map((item) => ({
+  const items = (data ?? []).map((item) => ({
     id: item.id,
     name: item.name,
     path: item.original_path,
@@ -183,6 +209,7 @@ async function listR2GalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
     duration: item.duration ?? undefined,
     status: item.status,
   }));
+  return { items, total: count ?? 0 };
 }
 
 async function signR2Upload(kind: GalleryKind, file: File, category: string, variant: string, token: string) {
@@ -313,7 +340,7 @@ async function updateR2GalleryItemMetadata(path: string, description: string, me
 }
 
 export async function listGalleryItems(kind: GalleryKind): Promise<GalleryItem[]> {
-  if (isR2Configured) return listR2GalleryItems(kind);
+  if (isR2Configured) return (await listGalleryPage(kind, { limit: 1000 })).items;
 
   if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
 

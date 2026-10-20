@@ -11,8 +11,11 @@ import { PAGE_META, PAGE_PATHS, pageFromPath, type Page } from "../lib/routes";
 import {
   DEFAULT_PHOTO_CATEGORIES,
   DEFAULT_VIDEO_CATEGORIES,
+  GALLERY_PAGE_SIZE,
   getCategories,
   type GalleryItem,
+  type GallerySort,
+  listGalleryPage,
   listGalleryItems,
 } from "../lib/gallery";
 
@@ -484,33 +487,68 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 }
 
 // Photos page
-function PhotosPage() {
+export function PhotosPage() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
+  const [sort, setSort] = useState<GallerySort>("newest");
+  const [total, setTotal] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [lightboxSource, setLightboxSource] = useState<HTMLElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const requestId = useRef(0);
+  const morePending = useRef(false);
 
   useEffect(() => {
-    listGalleryItems("photos")
-      .then(setPhotos)
-      .catch(() => setError("Não foi possível carregar as fotos."))
-      .finally(() => setLoading(false));
-  }, []);
+    const currentRequest = ++requestId.current;
+    morePending.current = false;
+    setPhotos([]);
+    setTotal(0);
+    setLoading(true);
+    setLoadingMore(false);
+    setError("");
+    listGalleryPage("photos", { category: filter, sort })
+      .then((page) => {
+        if (currentRequest !== requestId.current) return;
+        setPhotos(page.items);
+        setTotal(page.total);
+      })
+      .catch(() => {
+        if (currentRequest === requestId.current) setError("Não foi possível carregar as fotos.");
+      })
+      .finally(() => {
+        if (currentRequest === requestId.current) setLoading(false);
+      });
+    return () => { requestId.current++; };
+  }, [filter, sort]);
 
-  const categories = useMemo(() => getCategories(photos, DEFAULT_PHOTO_CATEGORIES), [photos]);
+  const loadMore = async () => {
+    if (loading || morePending.current || photos.length >= total) return;
+    morePending.current = true;
+    setLoadingMore(true);
+    setError("");
+    const currentRequest = requestId.current;
+    try {
+      const page = await listGalleryPage("photos", { category: filter, sort, offset: photos.length, limit: GALLERY_PAGE_SIZE });
+      if (currentRequest !== requestId.current) return;
+      setPhotos((current) => [...current, ...page.items.filter((item) => !current.some((loaded) => loaded.id === item.id))]);
+      setTotal(page.total);
+    } catch {
+      if (currentRequest === requestId.current) setError("Não foi possível carregar mais fotos.");
+    } finally {
+      if (currentRequest === requestId.current) {
+        morePending.current = false;
+        setLoadingMore(false);
+      }
+    }
+  };
 
-  const filtered =
-    filter === "Todos"
-      ? photos
-      : photos.filter((p) => p.category === filter);
-
-  useScrollReveal([loading, filter, filtered.length]);
+  useScrollReveal([loading, filter, sort, photos.length]);
 
   useEffect(() => {
     setLightbox(null);
-  }, [filter]);
+  }, [filter, sort]);
 
   return (
     <main className="page-enter relative pt-28 md:pt-16 min-h-screen overflow-hidden">
@@ -538,7 +576,7 @@ function PhotosPage() {
 
         {/* Filters */}
         <div className="reveal-on-scroll flex flex-wrap gap-2 mb-10 border-b border-border pb-6">
-          {categories.map((cat) => (
+          {DEFAULT_PHOTO_CATEGORIES.map((cat) => (
             <button
               type="button"
               key={cat}
@@ -554,11 +592,18 @@ function PhotosPage() {
               {cat}
             </button>
           ))}
+          <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            Ordenar por
+            <select value={sort} onChange={(event) => setSort(event.target.value as GallerySort)} className="min-h-11 rounded-full border border-border bg-background px-3 text-foreground">
+              <option value="newest">Mais recentes</option>
+              <option value="oldest">Mais antigas</option>
+            </select>
+          </label>
         </div>
 
         {/* Masonry-style grid */}
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-3 space-y-3">
-          {filtered.map((photo, i) => (
+          {photos.map((photo, i) => (
             <button
               type="button"
               key={photo.id}
@@ -588,14 +633,22 @@ function PhotosPage() {
           ))}
         </div>
 
-        {!loading && filtered.length === 0 && (
+        {!loading && photos.length === 0 && !error && (
           <p className="text-muted-foreground text-center py-20">Nenhuma foto publicada nesta categoria.</p>
+        )}
+        {!loading && photos.length < total && (
+          <div className="mt-10 text-center">
+            <button type="button" onClick={loadMore} disabled={loadingMore} className="min-h-11 rounded-full border border-border px-6 py-2 text-sm font-semibold hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
+              {loadingMore ? "Carregando..." : "Carregar mais"}
+            </button>
+            <p className="mt-3 text-xs text-muted-foreground">{photos.length} de {total} fotos</p>
+          </div>
         )}
       </div>
 
       {lightbox !== null && (
         <Lightbox
-          photos={filtered}
+          photos={photos}
           initialIndex={lightbox}
           onClose={() => setLightbox(null)}
           sourceElement={lightboxSource}
