@@ -49,6 +49,7 @@ export const DEFAULT_VIDEO_CATEGORIES = [
   "Moda e Varejo",
   "Eventos Sociais",
   "Gastronomia",
+  "Vídeos",
 ];
 
 function cleanCategory(category: string) {
@@ -131,6 +132,7 @@ export function normalizeGalleryCategory(kind: GalleryKind, category: string) {
     "moda e varejo": "Moda e Varejo",
     "eventos sociais": "Eventos Sociais",
     gastronomia: "Gastronomia",
+    videos: "Vídeos",
   };
 
   const normalized = aliases[key];
