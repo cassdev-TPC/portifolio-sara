@@ -74,7 +74,7 @@ function normalizeGalleryCategory(kind, category) {
     "moda e varejo": "Moda e Varejo",
     "eventos sociais": "Eventos Sociais",
     gastronomia: "Gastronomia",
-    videos: "Vídeos",
+    casamento: "Casamento",
   };
 
   return aliases[key] ?? "Sem categoria";
