@@ -263,6 +263,65 @@ async function putViaHostinger(key: string, file: File, token: string, onProgres
   }
 }
 
+async function uploadVideoInParts(file: File, category: string, token: string, onProgress?: (percent: number) => void) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const started = await requestR2Json<{ key: string; uploadId: string; publicUrl: string }>("/api/r2/multipart", {
+    method: "POST", headers,
+    body: JSON.stringify({ action: "start", category, fileName: file.name }),
+  });
+  const chunkSize = 8 * 1024 * 1024;
+  const parts: { partNumber: number; etag: string }[] = [];
+  try {
+    for (let offset = 0; offset < file.size; offset += chunkSize) {
+      const partNumber = parts.length + 1;
+      const chunk = file.slice(offset, offset + chunkSize);
+      const url = `/api/r2/multipart?key=${encodeURIComponent(started.key)}&uploadId=${encodeURIComponent(started.uploadId)}&partNumber=${partNumber}`;
+      let result: { partNumber: number; etag: string } | undefined;
+      for (let attempt = 0; attempt < 3 && !result; attempt++) {
+        try {
+          result = await new Promise<{ partNumber: number; etag: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", url);
+            xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+            xhr.setRequestHeader("Content-Type", "application/octet-stream");
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) onProgress?.(Math.round((offset + event.loaded) / file.size * 100));
+            };
+            xhr.onerror = () => reject(new Error("A conexão foi interrompida durante o envio do vídeo."));
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try { resolve(JSON.parse(xhr.responseText)); }
+                catch { reject(new Error("Resposta inválida ao enviar parte do vídeo.")); }
+              } else {
+                let message = `Falha ao enviar parte do vídeo. Status ${xhr.status}.`;
+                try { message = JSON.parse(xhr.responseText)?.error || message; } catch { /* Keep HTTP status. */ }
+                reject(new Error(message));
+              }
+            };
+            xhr.send(chunk);
+          });
+        } catch (error) {
+          if (attempt === 2) throw error;
+        }
+      }
+      if (!result) throw new Error("Não foi possível enviar uma parte do vídeo.");
+      parts.push(result);
+      onProgress?.(Math.round(Math.min(offset + chunk.size, file.size) / file.size * 100));
+    }
+    await requestR2Json("/api/r2/multipart", {
+      method: "POST", headers,
+      body: JSON.stringify({ action: "complete", key: started.key, uploadId: started.uploadId, parts }),
+    });
+    return { key: started.key, url: started.publicUrl };
+  } catch (error) {
+    await requestR2Json("/api/r2/multipart", {
+      method: "POST", headers,
+      body: JSON.stringify({ action: "abort", key: started.key, uploadId: started.uploadId }),
+    }).catch(() => {});
+    throw error;
+  }
+}
+
 export async function uploadProcessedGalleryItem(
   kind: GalleryKind,
   category: string,
@@ -278,11 +337,15 @@ export async function uploadProcessedGalleryItem(
 
   const uploaded: Record<string, { key: string; url: string }> = {};
   for (const [index, entry] of files.entries()) {
-    const signed = await signR2Upload(kind, entry.file, normalizedCategory, entry.variant, token);
     const reportProgress = (stage: string, part: number) => options.onProgress?.({
       stage,
       percent: Math.round(((index + part / 100) / files.length) * 100),
     });
+    if (kind === "videos" && entry.variant === "original") {
+      uploaded.original = await uploadVideoInParts(entry.file, normalizedCategory, token, (part) => reportProgress("Enviando vídeo", part));
+      continue;
+    }
+    const signed = await signR2Upload(kind, entry.file, normalizedCategory, entry.variant, token);
     try {
       await putWithProgress(signed.uploadUrl, entry.file, (part) => reportProgress(`Enviando ${entry.variant}`, part));
     } catch (error) {

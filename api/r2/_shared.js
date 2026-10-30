@@ -54,6 +54,7 @@ export function getR2Client() {
   return new S3Client({
     region: "auto",
     endpoint: config.endpoint,
+    requestChecksumCalculation: "WHEN_REQUIRED",
     credentials: {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,

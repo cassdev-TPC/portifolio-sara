@@ -8,6 +8,7 @@ import signUpload from './api/r2/sign-upload.js';
 import deleteItem from './api/r2/delete.js';
 import metadata from './api/r2/metadata.js';
 import upload from './api/r2/upload.js';
+import multipart from './api/r2/multipart.js';
 import config from './vercel.json' with { type: 'json' };
 
 const root = fileURLToPath(new URL('./dist/', import.meta.url));
@@ -36,6 +37,10 @@ export const server = createServer(async (req, res) => {
       if (pathname === '/api/r2/upload') {
         req.query = Object.fromEntries(url.searchParams);
         return await upload(req, res);
+      }
+      if (pathname === '/api/r2/multipart') {
+        req.query = Object.fromEntries(url.searchParams);
+        return await multipart(req, res);
       }
       const handler = routes.get(pathname);
       if (!handler) return res.status(404).json({ error: 'Rota nao encontrada.' });

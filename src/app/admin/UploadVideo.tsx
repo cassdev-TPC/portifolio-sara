@@ -43,6 +43,7 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
 
     let uploadedCount = 0;
     const failures: File[] = [];
+    const failureMessages: string[] = [];
 
     try {
       setLoading(true);
@@ -59,15 +60,20 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             onProgress: ({ stage, percent }) => { setMessage(`${stage}: ${selectedFile.name}`); setProgress(percent); },
           });
           uploadedCount += 1;
-        } catch { failures.push(selectedFile); }
+        } catch (uploadError) {
+          failures.push(selectedFile);
+          failureMessages.push(`${selectedFile.name}: ${getErrorMessage(uploadError)}`);
+        }
       }
       setFailed(failures);
-      setError(failures.length ? `${failures.length} vídeo${failures.length > 1 ? "s falharam" : " falhou"}. Tente novamente somente esses arquivos.` : "");
+      setError(failures.length ? `${failures.length} vídeo${failures.length > 1 ? "s falharam" : " falhou"}. ${failureMessages.join(" ")} Tente novamente somente esses arquivos.` : "");
       setMessage(`${uploadedCount} vídeo${uploadedCount === 1 ? " enviado" : "s enviados"} com sucesso.`);
       setFiles(failures);
-      setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
-      setDescription("");
-      form.reset();
+      if (!failures.length) {
+        setCategory(DEFAULT_VIDEO_CATEGORIES[0] ?? "Serviços e Produtos");
+        setDescription("");
+        form.reset();
+      }
       onUploaded();
     } catch (error) {
       const errorMessage = getErrorMessage(error);
