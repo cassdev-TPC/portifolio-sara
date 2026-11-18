@@ -11,6 +11,8 @@ vi.mock("../lib/gallery", () => ({
   GALLERY_PAGE_SIZE: 12,
   getCategories: (_items: unknown, defaults: string[]) => defaults,
   listGalleryItems: vi.fn(),
+  newGallerySeed: () => 1,
+  spreadGalleryItems: (items: unknown[]) => items,
   ...galleryMocks,
 }));
 
@@ -34,11 +36,15 @@ describe("PhotosPage", () => {
   it("começa com 12 fotos, acrescenta o próximo lote e consulta o filtro", async () => {
     const user = userEvent.setup();
     galleryMocks.listGalleryPage
+      .mockResolvedValueOnce({ items: photos, total: 13 })
       .mockResolvedValueOnce({ items: photos.slice(0, 12), total: 13 })
       .mockResolvedValueOnce({ items: photos.slice(12), total: 13 })
       .mockResolvedValueOnce({ items: [photos[0]], total: 1 });
 
     render(<PhotosPage />);
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Abrir / })).toHaveLength(12));
+    await user.selectOptions(screen.getByRole("combobox"), "newest");
+    await waitFor(() => expect(galleryMocks.listGalleryPage).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getAllByRole("button", { name: /^Abrir / })).toHaveLength(12));
     expect(screen.getByText("12 de 13 fotos")).toBeInTheDocument();
 
@@ -49,5 +55,18 @@ describe("PhotosPage", () => {
     await user.click(screen.getByRole("button", { name: "Retrato" }));
     await waitFor(() => expect(screen.getAllByRole("button", { name: /^Abrir / })).toHaveLength(1));
     expect(galleryMocks.listGalleryPage).toHaveBeenLastCalledWith("photos", expect.objectContaining({ category: "Retrato", sort: "newest" }));
+  });
+
+  it("no modo misturado busca tudo de uma vez e pagina localmente", async () => {
+    const user = userEvent.setup();
+    galleryMocks.listGalleryPage.mockResolvedValueOnce({ items: photos, total: 13 });
+
+    render(<PhotosPage />);
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Abrir / })).toHaveLength(12));
+    expect(galleryMocks.listGalleryPage).toHaveBeenLastCalledWith("photos", expect.objectContaining({ limit: 1000 }));
+
+    await user.click(screen.getByRole("button", { name: "Carregar mais" }));
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Abrir / })).toHaveLength(13));
+    expect(galleryMocks.listGalleryPage).toHaveBeenCalledTimes(1);
   });
 });

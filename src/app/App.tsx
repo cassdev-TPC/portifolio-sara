@@ -17,8 +17,13 @@ import {
   type GallerySort,
   listGalleryPage,
   listGalleryItems,
+  newGallerySeed,
   retryMediaFromFallback,
+  spreadGalleryItems,
 } from "../lib/gallery";
+
+type PhotoOrder = GallerySort | "mixed";
+const MIXED_FETCH_LIMIT = 1000;
 
 const SERVICES = [
   {
@@ -492,7 +497,7 @@ function HomePage({ onNav }: { onNav: (p: Page) => void }) {
 export function PhotosPage() {
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [filter, setFilter] = useState("Todos");
-  const [sort, setSort] = useState<GallerySort>("newest");
+  const [sort, setSort] = useState<PhotoOrder>("mixed");
   const [total, setTotal] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [lightboxSource, setLightboxSource] = useState<HTMLElement | null>(null);
@@ -501,16 +506,25 @@ export function PhotosPage() {
   const [error, setError] = useState("");
   const requestId = useRef(0);
   const morePending = useRef(false);
+  const mixedSeed = useRef(newGallerySeed());
+  const mixedItems = useRef<GalleryItem[]>([]);
 
   useEffect(() => {
     const currentRequest = ++requestId.current;
     morePending.current = false;
+    mixedItems.current = [];
     setPhotos([]);
     setTotal(0);
     setLoading(true);
     setLoadingMore(false);
     setError("");
-    listGalleryPage("photos", { category: filter, sort })
+    const request = sort === "mixed"
+      ? listGalleryPage("photos", { category: filter, sort: "newest", limit: MIXED_FETCH_LIMIT }).then((page) => {
+        mixedItems.current = spreadGalleryItems(page.items, mixedSeed.current);
+        return { items: mixedItems.current.slice(0, GALLERY_PAGE_SIZE), total: mixedItems.current.length };
+      })
+      : listGalleryPage("photos", { category: filter, sort });
+    request
       .then((page) => {
         if (currentRequest !== requestId.current) return;
         setPhotos(page.items);
@@ -527,6 +541,10 @@ export function PhotosPage() {
 
   const loadMore = async () => {
     if (loading || morePending.current || photos.length >= total) return;
+    if (sort === "mixed") {
+      setPhotos(mixedItems.current.slice(0, photos.length + GALLERY_PAGE_SIZE));
+      return;
+    }
     morePending.current = true;
     setLoadingMore(true);
     setError("");
@@ -596,7 +614,8 @@ export function PhotosPage() {
           ))}
           <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
             Ordenar por
-            <select value={sort} onChange={(event) => setSort(event.target.value as GallerySort)} className="min-h-11 rounded-full border border-border bg-background px-3 text-foreground">
+            <select value={sort} onChange={(event) => setSort(event.target.value as PhotoOrder)} className="min-h-11 rounded-full border border-border bg-background px-3 text-foreground">
+              <option value="mixed">Misturado</option>
               <option value="newest">Mais recentes</option>
               <option value="oldest">Mais antigas</option>
             </select>
@@ -678,7 +697,11 @@ function VideosPage() {
 
   const categories = useMemo(() => getCategories(videos, DEFAULT_VIDEO_CATEGORIES), [videos]);
 
-  const filtered = videos.filter((v) => v.category === filter);
+  const videoSeed = useRef(newGallerySeed());
+  const filtered = useMemo(
+    () => spreadGalleryItems(videos.filter((v) => v.category === filter), videoSeed.current),
+    [videos, filter]
+  );
 
   useEffect(() => {
     setActive(null);
