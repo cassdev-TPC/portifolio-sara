@@ -171,6 +171,69 @@ async function requestR2Json<T>(url: string, options: RequestInit = {}) {
   return data as T;
 }
 
+function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(items: T[], random: () => number) {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index--) {
+    const swap = Math.floor(random() * (index + 1));
+    [result[index], result[swap]] = [result[swap], result[index]];
+  }
+  return result;
+}
+
+const SAME_SESSION_MS = 30 * 60 * 1000;
+
+function sameSession(a?: GalleryItem, b?: GalleryItem) {
+  if (!a || !b || a.category !== b.category) return false;
+  const timeA = Date.parse(a.createdAt ?? "");
+  const timeB = Date.parse(b.createdAt ?? "");
+  return Number.isFinite(timeA) && Number.isFinite(timeB) && Math.abs(timeA - timeB) < SAME_SESSION_MS;
+}
+
+/**
+ * Embaralha a galeria de forma estável para a mesma semente: alterna categorias
+ * e evita colocar lado a lado itens enviados na mesma sessão.
+ */
+export function spreadGalleryItems(items: GalleryItem[], seed: number) {
+  const random = seededRandom(seed);
+  const buckets = new Map<string, GalleryItem[]>();
+  for (const item of shuffle(items, random)) {
+    buckets.set(item.category, [...(buckets.get(item.category) ?? []), item]);
+  }
+
+  const result: GalleryItem[] = [];
+  while (result.length < items.length) {
+    const previous = result.at(-1);
+    const candidates = Array.from(buckets.entries()).filter(([, bucket]) => bucket.length > 0);
+    const otherCategories = candidates.filter(([category]) => category !== previous?.category);
+    const pool = otherCategories.length ? otherCategories : candidates;
+    const weight = pool.reduce((sum, [, bucket]) => sum + bucket.length, 0);
+    let pick = random() * weight;
+    let [, bucket] = pool[pool.length - 1];
+    for (const entry of pool) {
+      pick -= entry[1].length;
+      if (pick < 0) { bucket = entry[1]; break; }
+    }
+    const index = bucket.findIndex((item) => !sameSession(item, previous));
+    result.push(bucket.splice(index === -1 ? 0 : index, 1)[0]);
+  }
+  return result;
+}
+
+export function newGallerySeed() {
+  return Math.floor(Math.random() * 2 ** 31);
+}
+
 export async function listGalleryPage(
   kind: GalleryKind,
   { category, sort = "newest", offset = 0, limit = GALLERY_PAGE_SIZE }: {
@@ -516,6 +579,20 @@ export async function deleteGalleryItem(path: string) {
 
   const { error } = await supabase.storage.from(GALLERY_BUCKET).remove([path]);
   if (error) throw error;
+}
+
+export async function updateGalleryItemCategory(kind: GalleryKind, path: string, category: string) {
+  if (!isR2Configured) throw new Error("Mover entre categorias está disponível apenas na galeria R2.");
+  if (!isSupabaseConfigured) throw new Error("Supabase não configurado.");
+  const normalizedCategory = validateGalleryCategory(kind, category);
+  const { data, error } = await supabase.from("gallery_media")
+    .update({ category: normalizedCategory, updated_at: new Date().toISOString() })
+    .eq("id", path)
+    .eq("kind", kind)
+    .select("id");
+  if (error) throw new Error(`Não foi possível mover o item: ${error.message}`);
+  if (!data?.length) throw new Error("Item não encontrado no catálogo ou sem permissão para alterar.");
+  return normalizedCategory;
 }
 
 export async function updateGalleryItemDescription(path: string, description: string) {
