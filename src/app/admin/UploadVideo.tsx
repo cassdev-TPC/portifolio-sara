@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Film, Info, X } from "lucide-react";
 import { DEFAULT_VIDEO_CATEGORIES, uploadProcessedGalleryItem } from "../../lib/gallery";
 import { processVideo, validateVideo } from "../../lib/mediaProcessing";
+import { FieldLabel, FilePicker, ProgressBar, StatusMessage, mono, serif, ui } from "./adminUi";
 
 type UploadVideoProps = {
   onUploaded: () => void;
@@ -29,6 +30,15 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   const [failed, setFailed] = useState<File[]>([]);
 
   const totalSize = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
+
+  const selectFiles = (selected: File[]) => {
+    const incompatible = selected.filter((file) => { try { validateVideo(file); return false; } catch { return true; } });
+    setFiles(selected.filter((file) => !incompatible.includes(file)));
+    setFailed([]);
+    setMessage("");
+    setError("");
+    if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -90,36 +100,54 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
   };
 
   return (
-    <form onSubmit={submit} className="min-w-0 w-full bg-card border border-border p-5 md:p-6 space-y-4 rounded-2xl">
-      <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar vídeos</h2>
-      <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivos</span>
-        <input
-          type="file"
+    <form onSubmit={submit} className={`${ui.panel} space-y-5`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className={ui.eyebrow} style={mono}>Novo envio</p>
+          <h2 className="mt-1 text-2xl" style={serif}>Adicionar vídeos</h2>
+        </div>
+        {files.length > 0 && <span className={ui.chip}>{files.length} selecionado{files.length > 1 ? "s" : ""}</span>}
+      </div>
+
+      <div className="flex flex-col gap-2 text-sm">
+        <FieldLabel>Arquivos</FieldLabel>
+        <FilePicker
           accept="video/*"
-          multiple
-          onChange={(event) => {
-            const selected = Array.from(event.target.files ?? []);
-            const incompatible = selected.filter((file) => { try { validateVideo(file); return false; } catch { return true; } });
-            setFiles(selected.filter((file) => !incompatible.includes(file)));
-            setFailed([]);
-            setMessage("");
-            setError("");
-            if (incompatible.length) setError(`${incompatible.length} arquivo(s) incompatível(is). Envie MP4 com vídeo H.264; MOV não é aceito neste momento.`);
-          }}
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
+          title="Clique ou arraste vídeos aqui"
+          hint="MP4 com vídeo H.264"
+          icon={<Film size={22} aria-hidden="true" />}
+          disabled={loading}
+          onFiles={selectFiles}
         />
         {files.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {files.length} vídeo{files.length > 1 ? "s selecionados" : " selecionado"} · total aproximado: {formatFileSize(totalSize)}.
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {files.length} vídeo{files.length > 1 ? "s selecionados" : " selecionado"} · total aproximado: {formatFileSize(totalSize)}.
+            </span>
+            <ul className="space-y-1.5">
+              {files.map((file) => (
+                <li key={`${file.name}-${file.lastModified}`} className="flex items-center gap-3 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs">
+                  <Film size={14} className="shrink-0 text-accent" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                  <span className="shrink-0 text-muted-foreground" style={mono}>{formatFileSize(file.size)}</span>
+                  {!loading && (
+                    <button type="button" onClick={() => setFiles((current) => current.filter((item) => item !== file))} className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-destructive" aria-label={`Remover ${file.name} da seleção`}>
+                      <X size={12} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Info size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
           Vídeos grandes podem levar alguns minutos. Mantenha a página aberta até a mensagem de sucesso.
         </span>
-      </label>
+      </div>
+
       <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
+        <FieldLabel>Categoria</FieldLabel>
         <select
           value={category}
           onChange={(event) => {
@@ -127,15 +155,19 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setMessage("");
             setError("");
           }}
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
+          className={ui.field}
         >
           {DEFAULT_VIDEO_CATEGORIES.filter((cat) => cat !== "Todos").map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
       </label>
+
       <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Descrição</span>
+        <span className="flex items-center justify-between">
+          <FieldLabel>Descrição</FieldLabel>
+          <span className="text-[11px] text-muted-foreground" style={mono}>{description.length}/240</span>
+        </span>
         <textarea
           value={description}
           onChange={(event) => {
@@ -143,23 +175,21 @@ export default function UploadVideo({ onUploaded }: UploadVideoProps) {
             setMessage("");
             setError("");
           }}
-          rows={4}
+          rows={3}
           maxLength={240}
           placeholder="Escreva uma descrição curta para aparecer na galeria."
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm resize-y rounded-xl"
+          className={`${ui.field} resize-y`}
         />
         <span className="text-xs text-muted-foreground">
           Essa descrição será aplicada em todos os vídeos selecionados neste envio.
         </span>
       </label>
-      <div aria-live="polite">{error ? <p className="text-sm text-destructive">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}</div>
-      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso do envio" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
-      <button
-        type="submit"
-        className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
-        disabled={loading}
-      >
-        {loading ? "Gerando capa e enviando..." : failed.length ? "Tentar novamente os que falharam" : `Enviar ${files.length > 1 ? "vídeos" : "vídeo"}`} <ArrowUpRight size={15} />
+
+      <StatusMessage error={error} message={message} />
+      {loading && <ProgressBar value={progress} />}
+
+      <button type="submit" className={ui.primaryButton} disabled={loading}>
+        {loading ? "Gerando capa e enviando..." : failed.length ? "Tentar novamente os que falharam" : `Enviar ${files.length > 1 ? "vídeos" : "vídeo"}`} <ArrowUpRight size={16} />
       </button>
     </form>
   );

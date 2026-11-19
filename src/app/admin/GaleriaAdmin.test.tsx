@@ -69,24 +69,21 @@ describe("GaleriaAdmin", () => {
     expect(screen.getByText("Retrato de teste")).toBeInTheDocument();
   });
 
-  it("mostra o total do catálogo e acrescenta o próximo lote", async () => {
-    const user = userEvent.setup();
-    const firstPage = Array.from({ length: 12 }, (_, index) => ({
+  it("mostra o acervo inteiro de uma vez, sem botão Carregar mais", async () => {
+    const allPhotos = Array.from({ length: 30 }, (_, index) => ({
       ...photo,
       id: `foto-${index}`,
       path: `foto-${index}`,
       description: `Foto ${index + 1}`,
     }));
-    const lastPhoto = { ...photo, id: "foto-12", path: "foto-12", description: "Foto 13" };
-    galleryMocks.listGalleryPage.mockResolvedValueOnce({ items: firstPage, total: 13 }).mockResolvedValueOnce({ items: [lastPhoto], total: 13 });
+    galleryMocks.listGalleryPage.mockResolvedValueOnce({ items: allPhotos, total: 30 });
 
     render(<GaleriaAdmin kind="photos" refreshKey={0} />);
 
-    expect(await screen.findByText("13 arquivos no total · 12 exibidos")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Carregar mais" }));
-    expect(await screen.findByText("13 arquivos no total · 13 exibidos")).toBeInTheDocument();
-    expect(screen.getByText("Foto 13")).toBeInTheDocument();
-    expect(galleryMocks.listGalleryPage).toHaveBeenLastCalledWith("photos", expect.objectContaining({ offset: 12 }));
+    expect(await screen.findByText("30 arquivos no total · 30 exibidos")).toBeInTheDocument();
+    expect(screen.getByText("Foto 30")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Carregar mais" })).not.toBeInTheDocument();
+    expect(galleryMocks.listGalleryPage).toHaveBeenCalledWith("photos", expect.objectContaining({ limit: 1000 }));
   });
 
   it("envia categoria e ordem à consulta e reinicia no primeiro lote", async () => {
@@ -99,7 +96,7 @@ describe("GaleriaAdmin", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "Ordenar por" }), "oldest");
 
     await waitFor(() => expect(galleryMocks.listGalleryPage).toHaveBeenLastCalledWith("photos", expect.objectContaining({
-      category: "Retrato", sort: "oldest", limit: 12,
+      category: "Retrato", sort: "oldest", limit: 1000,
     })));
     expect(screen.getByText("1 arquivo na categoria · 1 exibido")).toBeInTheDocument();
   });

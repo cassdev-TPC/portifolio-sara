@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ImagePlus, X } from "lucide-react";
 import { DEFAULT_PHOTO_CATEGORIES, uploadProcessedGalleryItem } from "../../lib/gallery";
 import { processPhoto } from "../../lib/mediaProcessing";
+import { FieldLabel, FilePicker, ProgressBar, StatusMessage, mono, serif, ui } from "./adminUi";
 
 type UploadFotoProps = {
   onUploaded: () => void;
@@ -12,10 +13,28 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error && error.message ? error.message : "Erro inesperado.";
 }
 
-function PhotoPreviews({ files }: { files: File[] }) {
+function PhotoPreviews({ files, onRemove, disabled }: { files: File[]; onRemove: (file: File) => void; disabled: boolean }) {
   const previews = useMemo(() => files.map((file) => ({ file, url: URL.createObjectURL(file) })), [files]);
   useEffect(() => () => previews.forEach(({ url }) => URL.revokeObjectURL(url)), [previews]);
-  return <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{previews.map(({ file, url }) => <img key={`${file.name}-${file.lastModified}`} src={url} alt={`Prévia de ${file.name}`} className="h-20 w-full rounded-lg object-cover" />)}</div>;
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {previews.map(({ file, url }) => (
+        <div key={`${file.name}-${file.lastModified}`} className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={url} alt={`Prévia de ${file.name}`} className="h-full w-full object-cover" />
+          {!disabled && (
+            <button
+              type="button"
+              onClick={() => onRemove(file)}
+              className="absolute right-1 top-1 rounded-full bg-black/70 p-1 text-white opacity-100 transition-opacity hover:bg-destructive sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+              aria-label={`Remover ${file.name} da seleção`}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function UploadFoto({ onUploaded }: UploadFotoProps) {
@@ -92,30 +111,39 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
   };
 
   return (
-    <form onSubmit={submit} className="min-w-0 w-full bg-card border border-border p-5 md:p-6 space-y-4 rounded-2xl">
-      <h2 className="text-2xl" style={{ fontFamily: "DM Serif Display, serif" }}>Adicionar fotos</h2>
-      <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Arquivos</span>
-        <input
-          type="file"
+    <form onSubmit={submit} className={`${ui.panel} space-y-5`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className={ui.eyebrow} style={mono}>Novo envio</p>
+          <h2 className="mt-1 text-2xl" style={serif}>Adicionar fotos</h2>
+        </div>
+        {files.length > 0 && <span className={ui.chip}>{files.length} selecionada{files.length > 1 ? "s" : ""}</span>}
+      </div>
+
+      <div className="flex flex-col gap-2 text-sm">
+        <FieldLabel>Arquivos</FieldLabel>
+        <FilePicker
           accept="image/*"
-          multiple
-          onChange={(event) => {
-            setFiles(Array.from(event.target.files ?? []));
+          title="Clique ou arraste fotos aqui"
+          hint="JPG, PNG ou WEBP · várias de uma vez"
+          icon={<ImagePlus size={22} aria-hidden="true" />}
+          disabled={loading}
+          onFiles={(selected) => {
+            setFiles(selected);
             setMessage("");
             setError("");
           }}
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
         />
         {files.length > 0 && (
           <span className="text-xs text-muted-foreground">
             {files.length} foto{files.length > 1 ? "s selecionadas" : " selecionada"}.
           </span>
         )}
-        {files.length > 0 && <PhotoPreviews files={files} />}
-      </label>
+        {files.length > 0 && <PhotoPreviews files={files} disabled={loading} onRemove={(file) => setFiles((current) => current.filter((item) => item !== file))} />}
+      </div>
+
       <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Categoria</span>
+        <FieldLabel>Categoria</FieldLabel>
         <select
           value={category}
           onChange={(event) => {
@@ -123,15 +151,19 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
             setMessage("");
             setError("");
           }}
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm rounded-xl"
+          className={ui.field}
         >
           {DEFAULT_PHOTO_CATEGORIES.filter((cat) => cat !== "Todos").map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
       </label>
+
       <label className="flex flex-col gap-2 text-sm">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground" style={{ fontFamily: "DM Mono, monospace" }}>Descrição</span>
+        <span className="flex items-center justify-between">
+          <FieldLabel>Descrição</FieldLabel>
+          <span className="text-[11px] text-muted-foreground" style={mono}>{description.length}/240</span>
+        </span>
         <textarea
           value={description}
           onChange={(event) => {
@@ -139,23 +171,21 @@ export default function UploadFoto({ onUploaded }: UploadFotoProps) {
             setMessage("");
             setError("");
           }}
-          rows={4}
+          rows={3}
           maxLength={240}
           placeholder="Escreva uma descrição curta para aparecer na galeria."
-          className="w-full min-w-0 max-w-full border border-border bg-background px-3 py-2 text-sm resize-y rounded-xl"
+          className={`${ui.field} resize-y`}
         />
         <span className="text-xs text-muted-foreground">
           Essa descrição será aplicada em todas as fotos selecionadas neste envio.
         </span>
       </label>
-      <div aria-live="polite">{error ? <p className="text-sm text-destructive">{error}</p> : message && <p className="text-sm text-muted-foreground">{message}</p>}</div>
-      {loading && <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Progresso do envio" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>}
-      <button
-        type="submit"
-        className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm tracking-wide hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-50 rounded-full"
-        disabled={loading}
-      >
-        {loading ? "Processando e enviando..." : failed.length ? "Tentar novamente as que falharam" : `Enviar ${files.length > 1 ? "fotos" : "foto"}`} <ArrowUpRight size={15} />
+
+      <StatusMessage error={error} message={message} />
+      {loading && <ProgressBar value={progress} />}
+
+      <button type="submit" className={ui.primaryButton} disabled={loading}>
+        {loading ? "Processando e enviando..." : failed.length ? "Tentar novamente as que falharam" : `Enviar ${files.length > 1 ? "fotos" : "foto"}`} <ArrowUpRight size={16} />
       </button>
     </form>
   );
